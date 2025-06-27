@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useJobService } from '@/services/api/jobService';
 import { JobPost } from '@/types/job';
-import { TableContainer, Table, Thead, Tbody, Tr, Th, Td, ActionButtons } from '@/components/common/Table';
+import { Table, Thead, Tbody, Tr, Th, Td, ActionButtons } from '@/components/common/Table';
 import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
+
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: ${themeColors.spacing.xl};
+`;
 
 const HeaderContainer = styled.div`
     display: flex;
@@ -20,6 +25,13 @@ const PageTitle = styled.h1`
     font-size: ${themeColors.typography.headings.desktop.h3.fontSize}px;
     font-weight: ${themeColors.typography.headings.desktop.h3.fontWeight};
     margin: 0;
+`;
+
+const TableCard = styled.div`
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: ${themeColors.cardBorder.lg};
+    overflow: hidden;
 `;
 
 const JobTypeBadge = styled.span<{ type: string }>`
@@ -106,57 +118,52 @@ export default function JobList() {
     };
 
     return (
-        <>
+        <Container>
             <HeaderContainer>
-                <PageTitle>Job Posts Management</PageTitle>
-                <Button onClick={handleCreate} variant="primary">
-                    Create Job Post
-                </Button>
+                <PageTitle>Jobs Management</PageTitle>
+                <Button onClick={handleCreate}>Create a post</Button>
             </HeaderContainer>
-
-            <Card>
-                <TableContainer>
-                    <Table>
-                        <Thead>
-                            <Tr>
-                                <Th>Title</Th>
-                                <Th>Company</Th>
-                                <Th>Type</Th>
-                                <Th>Status</Th>
-                                <Th>Remote</Th>
-                                <Th>Posted</Th>
-                                <Th>Actions</Th>
+            <TableCard>
+                <Table>
+                    <Thead>
+                        <Tr>
+                            <Th>Title</Th>
+                            <Th>Company</Th>
+                            <Th>Type</Th>
+                            <Th>Status</Th>
+                            <Th>Remote</Th>
+                            <Th>Posted</Th>
+                            <Th>Actions</Th>
+                        </Tr>
+                    </Thead>
+                    <Tbody>
+                        {jobs.map((job) => (
+                            <Tr key={job.id}>
+                                <Td>{job.title}</Td>
+                                <Td>{job.companyName}</Td>
+                                <Td>
+                                    <JobTypeBadge type={job.jobType}>{job.jobType.replace('_', ' ')}</JobTypeBadge>
+                                </Td>
+                                <Td>
+                                    <StatusBadge status={job.jobOfferStatus}>{job.jobOfferStatus}</StatusBadge>
+                                </Td>
+                                <Td>{job.remote ? 'Yes' : 'No'}</Td>
+                                <Td>{new Date(job.createdAt).toLocaleDateString()}</Td>
+                                <Td>
+                                    <ActionButtons>
+                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(job.id)}>
+                                            Edit
+                                        </Button>
+                                        <Button size="sm" variant="error" onClick={() => handleDelete(job.id)}>
+                                            Delete
+                                        </Button>
+                                    </ActionButtons>
+                                </Td>
                             </Tr>
-                        </Thead>
-                        <Tbody>
-                            {jobs.map((job) => (
-                                <Tr key={job.id}>
-                                    <Td>{job.title}</Td>
-                                    <Td>{job.companyName}</Td>
-                                    <Td>
-                                        <JobTypeBadge type={job.jobType}>{job.jobType.replace('_', ' ')}</JobTypeBadge>
-                                    </Td>
-                                    <Td>
-                                        <StatusBadge status={job.jobOfferStatus}>{job.jobOfferStatus}</StatusBadge>
-                                    </Td>
-                                    <Td>{job.remote ? 'Yes' : 'No'}</Td>
-                                    <Td>{new Date(job.createdAt).toLocaleDateString()}</Td>
-                                    <Td>
-                                        <ActionButtons>
-                                            <Button size="sm" variant="secondary" onClick={() => handleEdit(job.id)}>
-                                                Edit
-                                            </Button>
-                                            <Button size="sm" variant="error" onClick={() => handleDelete(job.id)}>
-                                                Delete
-                                            </Button>
-                                        </ActionButtons>
-                                    </Td>
-                                </Tr>
-                            ))}
-                        </Tbody>
-                    </Table>
-                </TableContainer>
-            </Card>
-        </>
+                        ))}
+                    </Tbody>
+                </Table>
+            </TableCard>
+        </Container>
     );
 }

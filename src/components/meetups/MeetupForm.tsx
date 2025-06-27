@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMeetupService } from '@/services/api/meetupService';
 import { MeetupFormData } from '@/types/meetup';
-import { Form, FormGroup, FormRow, Label, Input, Textarea, Checkbox } from '@/components/common/Form';
+import { Form, FormGroup, FormRow, Label, Input, Textarea, Checkbox, FileInputLabel } from '@/components/common/Form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
@@ -15,21 +15,6 @@ const FormActions = styled.div`
     gap: ${themeColors.spacing.md};
     justify-content: flex-end;
     margin-top: ${themeColors.spacing.xl};
-`;
-
-const FileInputLabel = styled.label`
-    display: inline-block;
-    padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
-    background-color: #2a2a2a;
-    border: 1px solid #3a3a3a;
-    border-radius: ${themeColors.cardBorder.md};
-    cursor: pointer;
-    transition: all ${themeColors.transitions.normal};
-    color: #ffffff;
-
-    &:hover {
-        background-color: #3a3a3a;
-    }
 `;
 
 const HiddenFileInput = styled.input`

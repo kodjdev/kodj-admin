@@ -2,7 +2,6 @@ import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 
 export const Card = styled.div`
-    background-color: 
     border: 1px solid ${themeColors.cardBorder.color};
     border-radius: ${themeColors.cardBorder.lg};
     padding: ${themeColors.spacing.lg};

@@ -3,9 +3,9 @@ import { themeColors } from '@/themes/themeColors';
 
 export const TableContainer = styled.div`
     overflow-x: auto;
-    border: 1px solid ${themeColors.cardBorder.color};
+    border: 1px solid #2a2a2a;
     border-radius: ${themeColors.cardBorder.lg};
-    background-color: ${themeColors.colors.neutral.white};
+    background-color: #1a1a1a;
 `;
 
 export const Table = styled.table`
@@ -14,21 +14,21 @@ export const Table = styled.table`
 `;
 
 export const Thead = styled.thead`
-    background-color: ${themeColors.colors.neutral.gray50};
-    border-bottom: 1px solid ${themeColors.cardBorder.color};
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #2a2a2a;
 `;
 
 export const Tbody = styled.tbody``;
 
 export const Tr = styled.tr`
-    border-bottom: 1px solid ${themeColors.cardBorder.color};
+    border-bottom: 1px solid #2a2a2a;
 
     &:last-child {
         border-bottom: none;
     }
 
     &:hover {
-        background-color: ${themeColors.colors.neutral.gray50};
+        background-color: #2a2a2a;
     }
 `;
 
@@ -36,7 +36,7 @@ export const Th = styled.th`
     padding: ${themeColors.spacing.md};
     text-align: left;
     font-weight: 600;
-    color: ${themeColors.colors.neutral.gray700};
+    color: #b3b3b3;
     font-size: ${themeColors.typography.body.small.fontSize}px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -44,7 +44,7 @@ export const Th = styled.th`
 
 export const Td = styled.td`
     padding: ${themeColors.spacing.md};
-    color: ${themeColors.colors.neutral.gray900};
+    color: #ffffff;
     font-size: ${themeColors.typography.body.regular.fontSize}px;
 `;
 

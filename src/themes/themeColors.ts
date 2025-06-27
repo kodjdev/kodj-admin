@@ -96,7 +96,7 @@ export const themeColors = {
         },
     },
     cardBorder: {
-        color: '#E5E7EB',
+        color: '#2a2a2a',
         sm: '4px',
         md: '8px',
         lg: '12px',

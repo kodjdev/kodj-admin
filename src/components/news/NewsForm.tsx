@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNewsService } from '@/services/api/newsService';
 import { NewsFormData } from '@/types/news';
-import { Form, FormGroup, FormRow, Label, Input, Textarea, Select, ErrorMessage } from '@/components/common/Form';
+import { Form, FormGroup, FormRow, Label, Input, Textarea, Select, FileInputLabel } from '@/components/common/Form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
@@ -13,20 +13,6 @@ const FormActions = styled.div`
     gap: ${themeColors.spacing.md};
     justify-content: flex-end;
     margin-top: ${themeColors.spacing.xl};
-`;
-
-const FileInputLabel = styled.label`
-    display: inline-block;
-    padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
-    background-color: ${themeColors.colors.neutral.gray100};
-    border: 1px solid ${themeColors.cardBorder.color};
-    border-radius: ${themeColors.cardBorder.md};
-    cursor: pointer;
-    transition: all ${themeColors.transitions.normal};
-
-    &:hover {
-        background-color: ${themeColors.colors.neutral.gray200};
-    }
 `;
 
 const HiddenFileInput = styled.input`

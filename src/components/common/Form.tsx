@@ -78,13 +78,28 @@ export const Textarea = styled.textarea`
     }
 `;
 
+export const FileInputLabel = styled.label`
+    display: inline-block;
+    padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: ${themeColors.cardBorder.md};
+    cursor: pointer;
+    transition: all ${themeColors.transitions.normal};
+    color: #ffffff;
+
+    &:hover {
+        background-color: #3a3a3a;
+    }
+`;
+
 export const Select = styled.select`
     padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
     border: 1px solid ${themeColors.cardBorder.color};
     border-radius: ${themeColors.cardBorder.md};
     font-size: ${themeColors.typography.body.regular.fontSize}px;
-    color: ${themeColors.colors.neutral.gray900};
-    background-color: ${themeColors.colors.neutral.white};
+    color: ${themeColors.dark.text};
+    background-color: ${themeColors.dark.background};
     transition: all ${themeColors.transitions.normal};
     cursor: pointer;
 
