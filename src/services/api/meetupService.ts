@@ -8,17 +8,19 @@ import {
     NoteFormData,
     Keynote,
     KeynoteFormData,
+    MeetupPaginationParams,
 } from '@/types/meetup';
 import useFetch from '@/hooks/useFetch';
 import { useMemo } from 'react';
+import { PaginatedResponse } from '@/types/api';
 
 export const useMeetupService = () => {
     const { fetchData, loading, error } = useFetch();
 
     return useMemo(
         () => ({
-            getMeetups: async (params?: PaginationParams): Promise<ApiResponse<Meetup[]>> => {
-                return fetchData<Meetup[]>({
+            getMeetups: async (params?: MeetupPaginationParams): Promise<ApiResponse<PaginatedResponse<Meetup>>> => {
+                return fetchData<PaginatedResponse<Meetup>>({
                     endpoint: '/meetups',
                     method: 'GET',
                     params,
