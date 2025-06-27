@@ -20,18 +20,18 @@ export const FormRow = styled.div`
 `;
 
 export const Label = styled.label`
-    color: ${themeColors.colors.neutral.gray700};
+    color: ${themeColors.colors.neutral.gray300};
     font-size: ${themeColors.typography.body.small.fontSize}px;
     font-weight: 500;
 `;
 
 export const Input = styled.input`
     padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
-    border: 1px solid ${themeColors.cardBorder.color};
+    border: 1px solid ${themeColors.dark.inputBorder};
     border-radius: ${themeColors.cardBorder.md};
     font-size: ${themeColors.typography.body.regular.fontSize}px;
-    color: ${themeColors.colors.neutral.gray900};
-    background-color: ${themeColors.colors.neutral.white};
+    color: ${themeColors.dark.text};
+    background-color: ${themeColors.dark.inputBackground};
     transition: all ${themeColors.transitions.normal};
 
     &:focus {
@@ -41,22 +41,22 @@ export const Input = styled.input`
     }
 
     &:disabled {
-        background-color: ${themeColors.colors.neutral.gray100};
+        background-color: ${themeColors.dark.surfaceSecondary};
         cursor: not-allowed;
     }
 
     &::placeholder {
-        color: ${themeColors.colors.neutral.gray400};
+        color: ${themeColors.dark.placeholder};
     }
 `;
 
 export const Textarea = styled.textarea`
     padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
-    border: 1px solid ${themeColors.cardBorder.color};
+    border: 1px solid ${themeColors.dark.inputBorder};
     border-radius: ${themeColors.cardBorder.md};
     font-size: ${themeColors.typography.body.regular.fontSize}px;
-    color: ${themeColors.colors.neutral.gray900};
-    background-color: ${themeColors.colors.neutral.white};
+    color: ${themeColors.dark.text};
+    background-color: ${themeColors.dark.inputBackground};
     transition: all ${themeColors.transitions.normal};
     resize: vertical;
     min-height: 120px;
@@ -69,12 +69,12 @@ export const Textarea = styled.textarea`
     }
 
     &:disabled {
-        background-color: ${themeColors.colors.neutral.gray100};
+        background-color: ${themeColors.dark.surfaceSecondary};
         cursor: not-allowed;
     }
 
     &::placeholder {
-        color: ${themeColors.colors.neutral.gray400};
+        color: ${themeColors.dark.placeholder};
     }
 `;
 

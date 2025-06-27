@@ -45,6 +45,18 @@ export const themeColors = {
             gray900: '#111827',
         },
     },
+    dark: {
+        background: '#0a0a0a',
+        surface: '#1a1a1a',
+        surfaceSecondary: '#2a2a2a',
+        text: '#ffffff',
+        textSecondary: '#b3b3b3',
+        placeholder: '#6a6a6a',
+        border: '#2a2a2a',
+        inputBackground: '#0a0a0a',
+        inputBorder: '#2a2a2a',
+        cardBackground: '#1a1a1a',
+    },
     spacing: {
         xs: '4px',
         sm: '8px',

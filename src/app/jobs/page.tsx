@@ -1,6 +1,6 @@
 'use client';
 
-import { JobList } from '@/components/jobs/JobList';
+import JobList from '@/components/jobs/JobList';
 
 export default function JobsPage() {
     return <JobList />;

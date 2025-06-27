@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 
 export const Card = styled.div`
-    background-color: ${themeColors.colors.neutral.white};
+    background-color: 
     border: 1px solid ${themeColors.cardBorder.color};
     border-radius: ${themeColors.cardBorder.lg};
     padding: ${themeColors.spacing.lg};
@@ -28,7 +28,7 @@ export const CardHeader = styled.div`
 `;
 
 export const CardTitle = styled.h3`
-    color: ${themeColors.colors.neutral.gray900};
+    color: ${themeColors.colors.neutral.white};
     font-size: ${themeColors.typography.headings.desktop.h5.fontSize}px;
     font-weight: ${themeColors.typography.headings.desktop.h5.fontWeight};
     margin: 0;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useJobService } from '@/services/api/jobService';
 import { JobPost } from '@/types/job';
 import { TableContainer, Table, Thead, Tbody, Tr, Th, Td, ActionButtons } from '@/components/common/Table';
@@ -16,7 +16,7 @@ const HeaderContainer = styled.div`
 `;
 
 const PageTitle = styled.h1`
-    color: ${themeColors.colors.neutral.gray900};
+    color: ${themeColors.colors.neutral.white};
     font-size: ${themeColors.typography.headings.desktop.h3.fontSize}px;
     font-weight: ${themeColors.typography.headings.desktop.h3.fontWeight};
     margin: 0;

@@ -19,29 +19,66 @@ export const Button = styled.button<ButtonProps>`
     width: ${(props) => (props.fullWidth ? '100%' : 'auto')};
 
     ${(props) => {
-        const variant = props.variant || 'primary';
-        const colors = themeColors.colors[variant];
+        switch (props.variant) {
+            case 'secondary':
+                return `
+                    background-color: #2a2a2a;
+                    color: #ffffff;
+                    border: 1px solid #3a3a3a;
+                    
+                    &:hover {
+                        background-color: #3a3a3a;
+                        border-color: #4a4a4a;
+                    }
+                `;
+            case 'success':
+                return `
+                    background-color: ${themeColors.colors.success.main};
+                    color: #ffffff;
+                    
+                    &:hover {
+                        background-color: ${themeColors.colors.success.dark};
+                    }
+                `;
+            case 'error':
+                return `
+                    background-color: ${themeColors.colors.error.main};
+                    color: #ffffff;
+                    
+                    &:hover {
+                        background-color: ${themeColors.colors.error.dark};
+                    }
+                `;
+            case 'warning':
+                return `
+                    background-color: ${themeColors.colors.warning.main};
+                    color: #ffffff;
+                    
+                    &:hover {
+                        background-color: ${themeColors.colors.warning.dark};
+                    }
+                `;
+            default:
+                return `
+                    background-color: ${themeColors.colors.primary.main};
+                    color: #ffffff;
+                    
+                    &:hover {
+                        background-color: ${themeColors.colors.primary.dark};
+                    }
+                `;
+        }
+    }}
 
-        return `
-      background-color: ${colors.main};
-      color: ${colors.contrast};
-      
-      &:hover {
-        background-color: ${colors.dark};
-      }
-      
-      &:active {
-        background-color: ${colors.dark};
+    &:active {
         transform: scale(0.98);
-      }
-      
-      &:disabled {
+    }
+
+    &:disabled {
         background-color: ${themeColors.colors.neutral.gray300};
         color: ${themeColors.colors.neutral.gray500};
         cursor: not-allowed;
-      }
-    `;
-    }}
+    }
 
     ${(props) => {
         const sizeMap = {
@@ -62,8 +99,8 @@ export const Button = styled.button<ButtonProps>`
         const size = sizeMap[props.size || 'md'];
 
         return `
-      padding: ${size.padding};
-      font-size: ${size.fontSize}px;
-    `;
+            padding: ${size.padding};
+            font-size: ${size.fontSize}px;
+        `;
     }}
 `;
