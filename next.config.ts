@@ -6,7 +6,7 @@ const nextConfig = {
         styledComponents: true,
     },
     env: {
-        NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://server.kodj.online/api/v1',
+        NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-test.kodj.dev/api/v1',
     },
 };
 

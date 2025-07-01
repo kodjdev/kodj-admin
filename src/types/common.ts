@@ -20,6 +20,7 @@ export type User = {
     imageName?: string;
     region?: string;
     createdAt: string;
+    role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
 };
 
 export type PaginationParams = {
