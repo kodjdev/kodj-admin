@@ -1,10 +1,10 @@
 import { ApiResponse, PaginationParams } from '@/types/common';
 import { JobPost, JobFormData } from '@/types/job';
-import useFetch from '@/hooks/useFetch';
 import { useMemo } from 'react';
+import useAxios from '@/hooks/useAxios';
 
 export const useJobService = () => {
-    const { fetchData, loading, error } = useFetch();
+    const fetchData = useAxios();
 
     return useMemo(
         () => ({
@@ -60,10 +60,7 @@ export const useJobService = () => {
                     method: 'DELETE',
                 });
             },
-
-            loading,
-            error,
         }),
-        [fetchData, loading, error],
+        [fetchData],
     );
 };

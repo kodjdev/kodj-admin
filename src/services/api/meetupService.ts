@@ -8,14 +8,13 @@ import {
     NoteFormData,
     Keynote,
     KeynoteFormData,
-    MeetupPaginationParams,
 } from '@/types/meetup';
-import useFetch from '@/hooks/useFetch';
 import { useMemo } from 'react';
 import { PaginatedResponse } from '@/types/api';
+import useAxios from '@/hooks/useAxios';
 
 export const useMeetupService = () => {
-    const { fetchData, loading, error } = useFetch();
+    const fetchData = useAxios();
 
     return useMemo(
         () => ({
@@ -160,10 +159,7 @@ export const useMeetupService = () => {
                     method: 'DELETE',
                 });
             },
-
-            loading,
-            error,
         }),
-        [fetchData, loading, error],
+        [fetchData],
     );
 };

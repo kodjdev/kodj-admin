@@ -1,10 +1,10 @@
 import { ApiResponse, PaginationParams } from '@/types/common';
 import { News, NewsFormData } from '@/types/news';
-import useFetch from '@/hooks/useFetch';
 import { useMemo } from 'react';
+import useAxios from '@/hooks/useAxios';
 
 export const useNewsService = () => {
-    const { fetchData, loading, error } = useFetch();
+    const fetchData = useAxios();
 
     return useMemo(
         () => ({
@@ -60,10 +60,7 @@ export const useNewsService = () => {
                     method: 'DELETE',
                 });
             },
-
-            loading,
-            error,
         }),
-        [fetchData, loading, error],
+        [fetchData],
     );
 };
