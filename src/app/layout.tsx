@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: 'Admin panel for managing meetups, news, and job posts',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
             <body className={inter.className}>

@@ -18,9 +18,9 @@ const LoginContainer = styled.div`
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #0a0a0a;
+    background-color: rgba(10, 10, 10, 0.9);
     position: relative;
-    overflow: hidden;
+    isolation: isolate;
 `;
 
 const TopSection = styled.div`
@@ -30,7 +30,7 @@ const TopSection = styled.div`
     justify-content: center;
     position: relative;
     z-index: 2;
-    background-color: #0a0a0a;
+    background-color: transparent;
 `;
 
 const BottomSection = styled.div`
@@ -38,25 +38,35 @@ const BottomSection = styled.div`
     bottom: 0;
     left: 0;
     right: 0;
-    height: 40%;
-    background: linear-gradient(to bottom, transparent, rgba(79, 70, 229, 0.1));
+    height: 50%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(10, 10, 10, 0.3) 30%,
+        rgba(10, 10, 10, 0.6) 60%,
+        rgba(10, 10, 10, 0.8) 100%
+    );
     z-index: 1;
+    overflow: hidden;
 
-    &::before {
+    &::after {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
-        background-image: url('/images/login-bg.jpg');
-        background-size: cover;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+        transform: translateY(30%);
+        background-image: url('/kodj.png');
+        background-size: contain;
+        background-repeat: no-repeat;
         background-position: center;
-        opacity: 0.1;
-        filter: blur(2px);
+        opacity: 0.4;
+        filter: blur(0.2px);
     }
 `;
-
 const LoginCard = styled.div`
     background-color: #1a1a1a;
     border: 1px solid #2a2a2a;
@@ -64,7 +74,7 @@ const LoginCard = styled.div`
     padding: ${themeColors.spacing.xxl};
     width: 100%;
     max-width: 440px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 `;
 
 const LogoContainer = styled.div`

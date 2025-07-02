@@ -5,6 +5,11 @@ import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthProvider';
+
+type LayoutProps = {
+    children: React.ReactNode;
+};
 
 const LayoutContainer = styled.div`
     min-height: 100vh;
@@ -20,10 +25,19 @@ const Sidebar = styled.aside`
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 
     @media (max-width: ${themeColors.breakpoints.tablet}) {
         display: none;
     }
+`;
+
+const NavSection = styled.div`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 `;
 
 const MainContent = styled.main`
@@ -44,10 +58,6 @@ const Logo = styled.h1`
     font-weight: ${themeColors.typography.headings.desktop.h5.fontWeight};
     margin-bottom: ${themeColors.spacing.xxl};
     padding-left: ${themeColors.spacing.sm};
-`;
-
-const NavSection = styled.div`
-    margin-bottom: ${themeColors.spacing.xl};
 `;
 
 const NavGroup = styled.div`
@@ -90,12 +100,68 @@ const NavIcon = styled.span`
     justify-content: center;
 `;
 
-type LayoutProps = {
-    children: React.ReactNode;
-};
+const UserSection = styled.div`
+    margin-top: auto;
+    padding-top: ${themeColors.spacing.xl};
+    border-top: 1px solid #2a2a2a;
+`;
+
+const UserInfo = styled.div`
+    padding: ${themeColors.spacing.md};
+    margin-bottom: ${themeColors.spacing.md};
+`;
+
+const UserAvatar = styled.div`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: ${themeColors.spacing.sm};
+`;
+
+const UserName = styled.p`
+    color: #ffffff;
+    font-size: ${themeColors.typography.body.regular.fontSize}px;
+    font-weight: 500;
+    margin: 0;
+`;
+
+const UserEmail = styled.p`
+    color: #6a6a6a;
+    font-size: ${themeColors.typography.body.small.fontSize}px;
+    margin: ${themeColors.spacing.xs} 0 0 0;
+`;
+
+const LogoutButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: ${themeColors.spacing.md};
+    padding: ${themeColors.spacing.sm} ${themeColors.spacing.md};
+    color: #ef4444;
+    background-color: transparent;
+    border: none;
+    border-radius: ${themeColors.cardBorder.md};
+    text-decoration: none;
+    transition: all ${themeColors.transitions.normal};
+    font-size: ${themeColors.typography.body.regular.fontSize}px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+
+    &:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+`;
 
 export default function ClientLayout({ children }: LayoutProps) {
     const pathname = usePathname();
+    const { user, logout } = useAuth();
 
     const mainNavItems = [
         { href: '/', label: 'Dashboard', icon: '⚡' },
@@ -123,10 +189,6 @@ export default function ClientLayout({ children }: LayoutProps) {
                                 {item.label}
                             </StyledNavLink>
                         ))}
-                    </NavGroup>
-
-                    <NavGroup>
-                        <NavGroupTitle>Documents</NavGroupTitle>
                         {documentItems.map((item) => (
                             <StyledNavLink key={item.href} href={item.href} $active={pathname === item.href}>
                                 <NavIcon>{item.icon}</NavIcon>
@@ -135,6 +197,21 @@ export default function ClientLayout({ children }: LayoutProps) {
                         ))}
                     </NavGroup>
                 </NavSection>
+                <UserSection>
+                    {user && (
+                        <UserInfo>
+                            <UserAvatar>
+                                {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
+                            </UserAvatar>
+                            <UserName>{user.name || user.username}</UserName>
+                            <UserEmail>{user.email}</UserEmail>
+                        </UserInfo>
+                    )}
+                    <LogoutButton onClick={logout}>
+                        <NavIcon>➜</NavIcon>
+                        Logout
+                    </LogoutButton>
+                </UserSection>
             </Sidebar>
 
             <MainContent>{children}</MainContent>

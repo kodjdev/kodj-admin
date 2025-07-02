@@ -22,8 +22,12 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         return <LoadingContainer>Loading...</LoadingContainer>;
     }
 
-    const authRoutes = ['/login', '/register', '/forgot-password'];
+    const authRoutes = ['/login', '/forgot-password'];
     const isAuthPage = authRoutes.includes(pathname);
+
+    if (!isAuthenticated && !isAuthPage) {
+        return <LoadingContainer>Redirecting...</LoadingContainer>;
+    }
 
     if (isAuthPage || !isAuthenticated) {
         return <>{children}</>;
