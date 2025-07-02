@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthService } from '@/services/api/authService';
 import { User } from '@/types/common';
+import { isApiError } from '@/types/error';
 
 type AuthContextType = {
     isAuthenticated: boolean;
@@ -25,14 +26,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [otpSent, setOtpSent] = useState(false);
+    const [tempEmail, setTempEmail] = useState<string>('');
 
     const router = useRouter();
     const pathname = usePathname();
     const authService = useAuthService();
 
+    const logout = useCallback(() => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setUser(null);
+        setIsAuthenticated(false);
+        setError(null);
+        setOtpSent(false);
+        router.push('/login');
+    }, [router]);
+
+    const loadUserFromToken = async (token: string): Promise<User | null> => {
+        try {
+            const userResponse = await authService.getUserDetails(token);
+            console.log('User details response:', userResponse);
+
+            if (userResponse.data) {
+                const userData = userResponse.data.data;
+
+                if (userData.oauthProvider !== 'LOCAL') {
+                    throw new Error('Access denied. Admin privileges required.');
+                }
+
+                const userInfo: User = {
+                    id: userData.id,
+                    email: userData.email,
+                    name: userData.name || `${userData.firstName} ${userData.lastName}`.trim() || userData.email,
+                    username: userData.username || userData.email,
+                    role: userData.role,
+                    createdAt: userData.createdAt,
+                };
+
+                return userInfo;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            throw error;
+        }
+    };
+
     const sendOtp = async (email: string, password: string) => {
         try {
             setError(null);
+            setTempEmail(email);
             await authService.login({
                 email,
                 password,
@@ -40,8 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 deviceType: 'web',
             });
             setOtpSent(true);
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'OTP request failed');
+        } catch (err: unknown) {
+            if (isApiError(err)) {
+                setError(err.response?.data?.message || err.message || 'Failed to send OTP');
+            } else if (err instanceof Error) {
+                setError(err.message || 'An unexpected error occurred');
+            } else {
+                setError('An unexpected error occurred');
+            }
             throw err;
         }
     };
@@ -50,20 +99,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             setError(null);
             const response = await authService.verifyLoginOtp(email, otp);
+            console.log('OTP verification response:', response);
 
-            if (response.data.access_token && response.data.refresh_token) {
-                const { access_token, refresh_token } = response.data;
+            if (response.data.data.access_token && response.data.data.refresh_token) {
+                const { access_token, refresh_token } = response.data.data;
 
                 localStorage.setItem('access_token', access_token);
                 localStorage.setItem('refresh_token', refresh_token);
 
-                setUser(user);
-                setIsAuthenticated(true);
-                setOtpSent(false);
-                router.push('/');
+                try {
+                    const userInfo = await loadUserFromToken(access_token);
+                    if (userInfo) {
+                        setUser(userInfo);
+                        setIsAuthenticated(true);
+                        setOtpSent(false);
+                        router.push('/');
+                    } else {
+                        throw new Error('User information could not be loaded');
+                    }
+                } catch (error) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    setError('Failed to load user information');
+                    throw error;
+                }
             }
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'Invalid OTP');
+        } catch (err: unknown) {
+            if (isApiError(err)) {
+                setError(err.response?.data?.message || err.message || 'Invalid OTP');
+            } else if (err instanceof Error) {
+                setError(err.message || 'An unexpected error occurred');
+            } else {
+                setError('An unexpected error occurred');
+            }
             throw err;
         }
     };
@@ -76,39 +144,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(null);
     };
 
-    const logout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        setUser(null);
-        setIsAuthenticated(false);
-        setError(null);
-        router.push('/login');
-    };
-
     const validateAuth = useCallback(async () => {
         const token = localStorage.getItem('access_token');
-        if (!token) return setIsLoading(false);
+
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
 
         try {
-            const response = await authService.validateToken();
-            if (response.data.valid && response.data.user?.role === 'ADMIN') {
-                setUser(response.data.user);
+            const userInfo = await loadUserFromToken(token);
+            if (userInfo) {
+                setUser(userInfo);
                 setIsAuthenticated(true);
             } else {
                 logout();
-                setError('Access denied. Admin privileges required.');
             }
         } catch (err) {
-            console.error('Token validation failed:', err);
+            console.error('Auth validation failed:', err);
             logout();
         } finally {
             setIsLoading(false);
         }
-    }, [authService]);
+    }, [logout]);
 
     useEffect(() => {
         validateAuth();
-    }, [validateAuth]);
+    }, []);
 
     useEffect(() => {
         if (!isLoading) {
@@ -129,6 +191,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const interval = setInterval(
             async () => {
                 try {
+                    const refreshToken = localStorage.getItem('refresh_token');
+                    if (!refreshToken) {
+                        logout();
+                        return;
+                    }
+
                     const response = await authService.refreshToken();
                     if (response.data) {
                         localStorage.setItem('access_token', response.data.accessToken);
@@ -139,11 +207,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     logout();
                 }
             },
+            /* refresh token every 15 minutes */
             15 * 60 * 1000,
         );
 
         return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    }, [isAuthenticated, authService, logout]);
 
     return (
         <AuthContext.Provider

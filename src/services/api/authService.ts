@@ -1,4 +1,4 @@
-import { ApiResponse, User } from '@/types/common';
+import { ApiResponse, User, UserDetails } from '@/types/common';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 
@@ -21,8 +21,10 @@ type LoginResponse = {
 };
 
 type TokenResponse = {
-    access_token: string;
-    refresh_token: string;
+    data: {
+        access_token: string;
+        refresh_token: string;
+    };
 };
 
 export const useAuthService = () => {
@@ -52,6 +54,16 @@ export const useAuthService = () => {
                 });
             },
 
+            getUserDetails: async (token: string): Promise<ApiResponse<UserDetails>> => {
+                return fetchData<UserDetails>({
+                    endpoint: '/users/details',
+                    method: 'GET',
+                    customHeaders: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+            },
+
             refreshToken: async (): Promise<ApiResponse<LoginResponse>> => {
                 const refreshToken = localStorage.getItem('refresh_token');
                 return fetchData<LoginResponse>({
@@ -59,17 +71,6 @@ export const useAuthService = () => {
                     method: 'GET',
                     customHeaders: {
                         Authorization: `Bearer ${refreshToken}`,
-                    },
-                });
-            },
-
-            validateToken: async (): Promise<ApiResponse<{ valid: boolean; user: User }>> => {
-                const token = localStorage.getItem('access_token');
-                return fetchData<{ valid: boolean; user: User }>({
-                    endpoint: '/auth/validate',
-                    method: 'GET',
-                    customHeaders: {
-                        Authorization: `Bearer ${token}`,
                     },
                 });
             },

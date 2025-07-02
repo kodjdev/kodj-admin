@@ -13,14 +13,19 @@ export type User = {
     phone?: string;
     bio?: string;
     oauthId?: string;
-    oauthProvider?: 'GOOGLE';
+    oauthProvider?: 'GOOGLE' | 'FACEBOOK' | 'LOCAL' | 'GITHUB' | 'LINKEDIN';
     firstName?: string;
     lastName?: string;
     imageUrl?: string;
     imageName?: string;
     region?: string;
     createdAt: string;
-    role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+    category?: string;
+    role: 'user' | 'admin' | 'speaker';
+};
+
+export type UserDetails = {
+    data: User;
 };
 
 export type PaginationParams = {
