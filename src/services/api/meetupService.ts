@@ -8,6 +8,9 @@ import {
     NoteFormData,
     Keynote,
     KeynoteFormData,
+    MeetupPaginationParams,
+    MeetupDetailsResponse,
+    MeetupResponse,
 } from '@/types/meetup';
 import { useMemo } from 'react';
 import { PaginatedResponse } from '@/types/api';
@@ -19,16 +22,16 @@ export const useMeetupService = () => {
     return useMemo(
         () => ({
             getMeetups: async (params?: MeetupPaginationParams): Promise<ApiResponse<PaginatedResponse<Meetup>>> => {
-                return fetchData<PaginatedResponse<Meetup>>({
-                    endpoint: '/meetups',
+                return await fetchData<PaginatedResponse<Meetup>>({
+                    endpoint: '/public/meetups',
                     method: 'GET',
                     params,
                 });
             },
 
-            getMeetupDetails: async (id: number): Promise<ApiResponse<Meetup>> => {
-                return fetchData<Meetup>({
-                    endpoint: `/meetups/${id}/details`,
+            getMeetupDetails: async (id: number): Promise<ApiResponse<MeetupDetailsResponse>> => {
+                return await fetchData<MeetupDetailsResponse>({
+                    endpoint: `/public/meetups/${id}/details`,
                     method: 'GET',
                 });
             },
@@ -46,7 +49,7 @@ export const useMeetupService = () => {
                     }
                 });
 
-                return fetchData<Meetup>({
+                return await fetchData<Meetup>({
                     endpoint: '/meetups',
                     method: 'POST',
                     data: formData,
@@ -56,16 +59,21 @@ export const useMeetupService = () => {
                 });
             },
 
-            updateMeetup: async (id: number, meetupData: Partial<MeetupFormData>): Promise<ApiResponse<Meetup>> => {
-                return fetchData<Meetup>({
-                    endpoint: `/meetups/${id}`,
+            updateMeetup: async (id: number, meetupData: Partial<Meetup>): Promise<ApiResponse<MeetupResponse>> => {
+                const accessToken = localStorage.getItem('access_token');
+                return await fetchData<MeetupResponse>({
+                    endpoint: `/admin/meetups/${id}`,
                     method: 'PUT',
                     data: meetupData,
+                    customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
                 });
             },
 
             deleteMeetup: async (id: number): Promise<ApiResponse<string>> => {
-                return fetchData<string>({
+                return await fetchData<string>({
                     endpoint: `/meetups/${id}`,
                     method: 'DELETE',
                 });
@@ -85,7 +93,7 @@ export const useMeetupService = () => {
                     }
                 });
 
-                return fetchData<Speaker>({
+                return await fetchData<Speaker>({
                     endpoint: `/meetups/${meetupId}/speakers`,
                     method: 'POST',
                     data: formData,
@@ -100,7 +108,7 @@ export const useMeetupService = () => {
                 speakerId: number,
                 speakerData: Partial<SpeakerFormData>,
             ): Promise<ApiResponse<Speaker>> => {
-                return fetchData<Speaker>({
+                return await fetchData<Speaker>({
                     endpoint: `/meetups/${meetupId}/speakers/${speakerId}`,
                     method: 'PUT',
                     data: speakerData,
@@ -108,7 +116,7 @@ export const useMeetupService = () => {
             },
 
             deleteSpeaker: async (meetupId: number, speakerId: number): Promise<ApiResponse<string>> => {
-                return fetchData<string>({
+                return await fetchData<string>({
                     endpoint: `/meetups/${meetupId}/speakers/${speakerId}`,
                     method: 'DELETE',
                 });
@@ -116,7 +124,7 @@ export const useMeetupService = () => {
 
             // Note endpoints
             addNote: async (meetupId: number, noteData: NoteFormData): Promise<ApiResponse<Note>> => {
-                return fetchData<Note>({
+                return await fetchData<Note>({
                     endpoint: `/meetups/${meetupId}/notes`,
                     method: 'POST',
                     data: noteData,
@@ -124,7 +132,7 @@ export const useMeetupService = () => {
             },
 
             deleteNote: async (meetupId: number, noteId: number): Promise<ApiResponse<string>> => {
-                return fetchData<string>({
+                return await fetchData<string>({
                     endpoint: `/meetups/${meetupId}/notes/${noteId}`,
                     method: 'DELETE',
                 });
@@ -143,7 +151,7 @@ export const useMeetupService = () => {
                     }
                 });
 
-                return fetchData<Keynote>({
+                return await fetchData<Keynote>({
                     endpoint: `/meetups/${meetupId}/keynotes`,
                     method: 'POST',
                     data: formData,
@@ -154,7 +162,7 @@ export const useMeetupService = () => {
             },
 
             deleteKeynote: async (meetupId: number, keynoteId: number): Promise<ApiResponse<string>> => {
-                return fetchData<string>({
+                return await fetchData<string>({
                     endpoint: `/meetups/${meetupId}/keynotes/${keynoteId}`,
                     method: 'DELETE',
                 });

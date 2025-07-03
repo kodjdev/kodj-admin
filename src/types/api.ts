@@ -3,7 +3,9 @@ export type PaginatedResponse<T> = {
     totalPages: number;
     size: number;
     number: number;
-    content: T[];
+    data: {
+        content: T[];
+    };
     numberOfElements: number;
     first: boolean;
     last: boolean;

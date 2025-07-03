@@ -1,4 +1,33 @@
-export type Meetup = {
+type BaseMeetup = {
+    title: string;
+    description: string;
+    parking: boolean;
+    location: string;
+    maxSeats: number;
+    provided: string;
+    meetupDate: string;
+    startTime: string;
+    endTime: string;
+};
+
+export type Meetup = BaseMeetup & {
+    image?: string;
+};
+
+export type MeetupResponse = BaseMeetup & {
+    id: number;
+    availableSeats: number;
+    organizerId: number;
+    imageName: string;
+    imageURL: string;
+};
+export type MeetupPaginationParams = {
+    page: number;
+    size: number;
+    type?: 'upcoming' | 'past';
+};
+
+export type MeetupDetails = {
     id: number;
     title: string;
     description: string;
@@ -8,11 +37,32 @@ export type Meetup = {
     availableSeats: number;
     provided: string;
     meetupDate: string;
-    organizerId: number;
     startTime: string;
     endTime: string;
     imageName?: string;
     imageURL?: string;
+    speakers: Speaker[];
+    keynoteSessions: Keynote[];
+    meetupRegistrations: MeetupRegistration[];
+    notes: Note[];
+    reviews: Review[];
+};
+
+export type MeetupDetailsResponse = {
+    data: MeetupDetails;
+};
+
+export type MeetupRegistration = {
+    id: number;
+    firstName: string;
+    lastName: string;
+    avatarURL?: string;
+    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+    cancelled: boolean;
+    attendanceReason?: string;
+    expectation?: string;
+    interestField?: string;
+    createdAt: string;
 };
 
 export type MeetupFormData = {
@@ -25,7 +75,10 @@ export type MeetupFormData = {
     meetupDate: string;
     startTime: string;
     endTime: string;
-    image?: File;
+    imageName: string;
+    imageURL: string;
+    speakers: Speaker[];
+    keynoteSessions: Keynote[];
 };
 
 export type Speaker = {
@@ -90,4 +143,19 @@ export type KeynoteFormData = {
     startTime: string;
     endTime: string;
     file?: File;
+};
+
+export type Review = {
+    id: number;
+    username: string;
+    avatarURL?: string;
+    description: string;
+    createdAt: string;
+    media: {
+        id: number;
+        url: string;
+        name: string;
+        mediaType: 'IMAGE' | 'VIDEO';
+        createdAt: string;
+    };
 };
