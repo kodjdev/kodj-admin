@@ -179,7 +179,7 @@ const LoadingState = styled.div`
     color: ${themeColors.colors.neutral.gray500};
 `;
 
-export const DashboardOverview: React.FC = () => {
+export default function DashboardOverview() {
     const [activeTab, setActiveTab] = useState<'3months' | '30days' | '7days'>('30days');
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -341,4 +341,4 @@ export const DashboardOverview: React.FC = () => {
             </ChartContainer>
         </DashboardContainer>
     );
-};
+}

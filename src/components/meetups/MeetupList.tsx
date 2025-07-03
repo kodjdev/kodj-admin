@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMeetupService } from '@/services/api/meetupService';
-import { Meetup } from '@/types/meetup';
+import React from 'react';
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
-import { Table, Tbody, Td, Th, Thead, Tr } from '../common/Table';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/common/Table';
+import { Meetup } from '@/types/meetup';
+
+type MeetupListProps = {
+    meetups: Meetup[];
+    loading: boolean;
+    error: string | null;
+    onDelete: (id: number) => Promise<void>;
+    onEdit: (id: number) => void;
+    onCreate: () => void;
+};
 
 const Container = styled.div`
     display: flex;
@@ -65,48 +72,12 @@ const AvailabilityBadge = styled.span<{ $available: boolean }>`
     color: ${(props) => (props.$available ? '#10b981' : '#ef4444')};
 `;
 
-export default function MeetupList() {
-    const router = useRouter();
-    const { getMeetups, deleteMeetup, loading } = useMeetupService();
-    const [meetups, setMeetups] = useState<Meetup[]>([]);
-
-    useEffect(() => {
-        fetchMeetups();
-    }, []);
-
-    const fetchMeetups = async () => {
-        try {
-            const response = await getMeetups();
-            setMeetups(response.data);
-        } catch (err) {
-            console.error('Failed to fetch meetups:', err);
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (window.confirm('Are you sure you want to delete this meetup?')) {
-            try {
-                await deleteMeetup(id);
-                await fetchMeetups();
-            } catch (err) {
-                console.error('Failed to delete meetup:', err);
-            }
-        }
-    };
-
-    const handleEdit = (id: number) => {
-        router.push(`/meetups/${id}`);
-    };
-
-    const handleCreate = () => {
-        router.push('/meetups/new');
-    };
-
+export default function MeetupList({ meetups, onDelete, onEdit, onCreate }: MeetupListProps) {
     return (
         <Container>
             <HeaderContainer>
                 <PageTitle>Meetup Management</PageTitle>
-                <CreateButton onClick={handleCreate}>Create Meetup</CreateButton>
+                <CreateButton onClick={onCreate}>Create Meetup</CreateButton>
             </HeaderContainer>
 
             <TableCard>
@@ -133,14 +104,10 @@ export default function MeetupList() {
                                 </Td>
                                 <Td>
                                     <ActionButtons>
-                                        <ActionButton
-                                            size="sm"
-                                            variant="secondary"
-                                            onClick={() => handleEdit(meetup.id)}
-                                        >
+                                        <ActionButton size="sm" variant="secondary" onClick={() => onEdit(meetup.id)}>
                                             Manage
                                         </ActionButton>
-                                        <ActionButton size="sm" variant="error" onClick={() => handleDelete(meetup.id)}>
+                                        <ActionButton size="sm" variant="error" onClick={() => onDelete(meetup.id)}>
                                             Delete
                                         </ActionButton>
                                     </ActionButtons>

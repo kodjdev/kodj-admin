@@ -1,5 +1,3 @@
-'use client';
-
 import { usePathname } from 'next/navigation';
 import ClientLayout from './ClientLayout';
 import styled from 'styled-components';

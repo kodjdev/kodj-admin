@@ -68,7 +68,10 @@ export default function useAxios() {
                 };
 
                 if (data) {
-                    if (typeof data === 'object' && Object.keys(data).includes('credential')) {
+                    if (data instanceof FormData) {
+                        config.data = data;
+                        delete config.headers!['Content-Type'];
+                    } else if (typeof data === 'object' && Object.keys(data).includes('credential')) {
                         config.data = {
                             credential: data.credential,
                         };
@@ -96,6 +99,12 @@ export default function useAxios() {
             } catch (error: unknown) {
                 console.error(`useAxios error (${method} ${url}):`, error);
 
+                if (error instanceof AxiosError) {
+                    console.error('Response status:', error.response?.status);
+                    console.error('Response data:', error.response?.data);
+                    console.error('Request headers:', error.config?.headers);
+                }
+
                 const errorMessage =
                     error instanceof Error
                         ? error.message
@@ -115,77 +124,6 @@ export default function useAxios() {
                 throw error;
             }
         },
-        [setError, axiosInstance],
+        [setError, axiosInstance, router],
     );
 }
-
-// import createAxiosInstance from '@/services/axiosInstance';
-// import { ApiResponse } from '@/types/common';
-// import { AxiosError } from 'axios';
-// import { useCallback, useState } from 'react';
-
-// type FetchOptions<T> = {
-//     endpoint: string;
-//     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-//     data?: any;
-//     params?: Record<string, any>;
-//     customHeaders?: Record<string, string>;
-//     onSuccess?: (response: ApiResponse<T>) => void;
-//     onError?: (error: Error | AxiosError) => void;
-//     withCredentials?: boolean;
-// };
-
-// export default function useFetch() {
-//     const [loading, setLoading] = useState(false);
-//     const [error, setError] = useState<Error | null>(null);
-//     const axiosInstance = createAxiosInstance();
-
-//     const fetchData = useCallback(
-//         async <T>(options: FetchOptions<T>): Promise<ApiResponse<T>> => {
-//             const {
-//                 endpoint,
-//                 method = 'GET',
-//                 data,
-//                 params,
-//                 customHeaders,
-//                 onSuccess,
-//                 onError,
-//                 withCredentials = false,
-//             } = options;
-
-//             setLoading(true);
-//             setError(null);
-
-//             try {
-//                 const response = await axiosInstance.request<ApiResponse<T>>({
-//                     url: endpoint,
-//                     method,
-//                     data,
-//                     params,
-//                     headers: customHeaders,
-//                     withCredentials,
-//                 });
-
-//                 if (onSuccess) {
-//                     onSuccess(response.data);
-//                 }
-
-//                 return response.data;
-//             } catch (err) {
-//                 const error = err as Error | AxiosError;
-//                 setError(error);
-
-//                 if (onError) {
-//                     onError(error);
-//                 }
-
-//                 throw error;
-//             } finally {
-//                 setLoading(false);
-//             }
-//         },
-//         [axiosInstance],
-//     );
-
-//     return { fetchData, loading, error };
-// }

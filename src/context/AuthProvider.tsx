@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setOtpSent(true);
         } catch (err: unknown) {
             if (isApiError(err)) {
-                setError(err.response?.data?.message || err.message || 'Failed to send OTP');
+                setError(err.response?.data?.data.message || err.message || 'Failed to send OTP');
             } else if (err instanceof Error) {
                 setError(err.message || 'An unexpected error occurred');
             } else {
@@ -103,6 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (response.data.data.access_token && response.data.data.refresh_token) {
                 const { access_token, refresh_token } = response.data.data;
+
+                console.log('Response tokens:', { access_token, refresh_token });
 
                 localStorage.setItem('access_token', access_token);
                 localStorage.setItem('refresh_token', refresh_token);

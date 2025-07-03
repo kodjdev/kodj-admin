@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMeetupService } from '@/services/api/meetupService';
-import { MeetupFormData } from '@/types/meetup';
+import { Meetup, MeetupFormData } from '@/types/meetup';
 import { Form, FormGroup, FormRow, Label, Input, Textarea, Checkbox, FileInputLabel } from '@/components/common/Form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -30,49 +29,56 @@ const CheckboxWrapper = styled.div`
 
 type MeetupFormProps = {
     meetupId?: string;
+    onSubmit?: (formData: Meetup, imageFile?: File | null) => Promise<void>;
+    initialData?: MeetupFormData;
 };
 
-export default function MeetupForm({ meetupId }: MeetupFormProps) {
+export default function MeetupForm({ meetupId, initialData, onSubmit }: MeetupFormProps) {
     const router = useRouter();
-    const { createMeetup, updateMeetup, getMeetupDetails, loading } = useMeetupService();
-    const [formData, setFormData] = useState<MeetupFormData>({
+    const [formData, setFormData] = useState<Meetup>({
         title: '',
         description: '',
         parking: false,
         location: '',
-        maxSeats: 50,
+        maxSeats: 1,
         provided: '',
         meetupDate: '',
         startTime: '',
         endTime: '',
+        image: '',
     });
-    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imageFile, setImageFile] = useState<{ name: string; preview?: string } | null>(null);
 
     useEffect(() => {
-        if (meetupId) {
-            fetchMeetupDetails();
-        }
-    }, [meetupId]);
+        if (!initialData || !initialData.title) return;
 
-    const fetchMeetupDetails = async () => {
-        try {
-            const response = await getMeetupDetails(Number(meetupId));
-            const meetup = response.data;
-            setFormData({
-                title: meetup.title,
-                description: meetup.description,
-                parking: meetup.parking,
-                location: meetup.location,
-                maxSeats: meetup.maxSeats,
-                provided: meetup.provided,
-                meetupDate: meetup.meetupDate,
-                startTime: meetup.startTime,
-                endTime: meetup.endTime,
-            });
-        } catch (err) {
-            console.error('Failed to fetch meetup details:', err);
+        console.log('InitialData in MeetupForm:', initialData);
+
+        const formatToDateTimeLocal = (value?: string) => {
+            if (!value || typeof value !== 'string') return '';
+            return value.replace(' ', 'T').slice(0, 16);
+        };
+
+        setFormData({
+            title: initialData.title || '',
+            description: initialData.description || '',
+            parking: initialData.parking || false,
+            location: initialData.location || '',
+            maxSeats: initialData.maxSeats || 1,
+            provided: initialData.provided || '',
+            meetupDate: initialData.meetupDate || '',
+            startTime: formatToDateTimeLocal(initialData.startTime),
+            endTime: formatToDateTimeLocal(initialData.endTime),
+            image: initialData.imageName || '',
+        });
+
+        if (initialData.imageName && initialData.imageURL) {
+            setImageFile({
+                name: initialData.imageName,
+                preview: initialData.imageURL,
+            } as any);
         }
-    };
+    }, [initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -92,28 +98,19 @@ export default function MeetupForm({ meetupId }: MeetupFormProps) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
+            const file = e.target.files[0];
+            setImageFile({
+                name: file.name,
+                preview: URL.createObjectURL(file),
+                file,
+            } as any);
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        try {
-            const submitData = {
-                ...formData,
-                image: imageFile || undefined,
-            };
-
-            if (meetupId) {
-                await updateMeetup(Number(meetupId), submitData);
-            } else {
-                await createMeetup(submitData);
-            }
-
-            router.push('/meetups');
-        } catch (err) {
-            console.error('Failed to save meetup:', err);
+        if (onSubmit) {
+            await onSubmit(formData, (imageFile as any)?.file ?? null);
         }
     };
 
@@ -243,15 +240,27 @@ export default function MeetupForm({ meetupId }: MeetupFormProps) {
                             Choose Image
                             <HiddenFileInput id="image" type="file" accept="image/*" onChange={handleFileChange} />
                         </FileInputLabel>
-                        {imageFile && <span style={{ color: '#b3b3b3', marginLeft: '10px' }}>{imageFile.name}</span>}
+
+                        {imageFile && (
+                            <div style={{ marginTop: '8px', color: '#b3b3b3' }}>
+                                <div>{imageFile.name}</div>
+                                {imageFile.preview && (
+                                    <img
+                                        src={imageFile.preview}
+                                        alt="Selected"
+                                        style={{ marginTop: '6px', height: '100px', borderRadius: '8px' }}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </FormGroup>
 
                     <FormActions>
                         <Button type="button" variant="secondary" onClick={handleCancel}>
                             Cancel
                         </Button>
-                        <Button type="submit" variant="primary" disabled={loading}>
-                            {loading ? 'Saving...' : 'Save'}
+                        <Button type="submit" variant="primary">
+                            {meetupId ? 'Update Meetup' : 'Create Meetup'}
                         </Button>
                     </FormActions>
                 </Form>
