@@ -36,7 +36,12 @@ export const useAuthService = () => {
                 return fetchData<LoginResponse>({
                     endpoint: '/auth/login',
                     method: 'POST',
-                    data: credentials,
+                    data: {
+                        email: credentials.email,
+                        password: credentials.password,
+                        ipAddress: credentials.ipAddress || 'unknown',
+                        deviceType: credentials.deviceType || 'web',
+                    },
                     customHeaders: {
                         'Content-Type': 'application/json',
                     },
@@ -54,23 +59,29 @@ export const useAuthService = () => {
                 });
             },
 
+            refreshToken: async (): Promise<ApiResponse<TokenResponse>> => {
+                const refreshToken = localStorage.getItem('refresh_token');
+
+                if (!refreshToken) {
+                    throw new Error('No refresh token available');
+                }
+
+                return await fetchData<TokenResponse>({
+                    endpoint: '/auth/token/refresh',
+                    method: 'POST',
+                    customHeaders: {
+                        Authorization: `Bearer ${refreshToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+            },
+
             getUserDetails: async (token: string): Promise<ApiResponse<UserDetails>> => {
                 return fetchData<UserDetails>({
                     endpoint: '/users/details',
                     method: 'GET',
                     customHeaders: {
                         Authorization: `Bearer ${token}`,
-                    },
-                });
-            },
-
-            refreshToken: async (): Promise<ApiResponse<LoginResponse>> => {
-                const refreshToken = localStorage.getItem('refresh_token');
-                return fetchData<LoginResponse>({
-                    endpoint: '/auth/refresh-token',
-                    method: 'GET',
-                    customHeaders: {
-                        Authorization: `Bearer ${refreshToken}`,
                     },
                 });
             },

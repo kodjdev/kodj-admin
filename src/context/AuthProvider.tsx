@@ -13,9 +13,11 @@ type AuthContextType = {
     login: (accessToken: string, refreshToken: string, user: User) => void;
     logout: () => void;
     error: string | null;
-    verifyOtp: (email: string, otp: string) => Promise<void>;
+    verifyOtp: (email: string, otp: string) => Promise<boolean>;
     otpSent: boolean;
-    sendOtp: (email: string, password: string) => Promise<void>;
+    sendOtp: (email: string, password: string) => Promise<boolean>;
+    resetOtp: () => void;
+    resendOtp: (email: string, password: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,26 +74,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const sendOtp = async (email: string, password: string) => {
+    const handleAuthError = (err: unknown): string => {
+        if (isApiError(err)) {
+            const status = err.response?.statusCode || 500;
+            const message = err.response?.data?.message || err.message || 'An error occurred';
+
+            switch (status) {
+                case 400:
+                case 403:
+                    return 'Incorrect email or password. Please try again.';
+                case 401:
+                    return 'Invalid credentials. Please check your email and password.';
+                case 404:
+                    return 'Account not found. Please check your email.';
+                case 429:
+                    return 'Too many attempts. Please try again later.';
+                case 500:
+                    return 'Server error. Please try again later.';
+                default:
+                    return message || 'Login failed. Please try again.';
+            }
+        } else if (err instanceof Error) {
+            return err.message || 'An unexpected error occurred';
+        } else {
+            return 'An unexpected error occurred';
+        }
+    };
+
+    const sendOtp = async (email: string, password: string): Promise<boolean> => {
         try {
             setError(null);
             setTempEmail(email);
-            await authService.login({
+
+            const response = await authService.login({
                 email,
                 password,
                 ipAddress: window.location.hostname,
                 deviceType: 'web',
             });
-            setOtpSent(true);
-        } catch (err: unknown) {
-            if (isApiError(err)) {
-                setError(err.response?.data?.data.message || err.message || 'Failed to send OTP');
-            } else if (err instanceof Error) {
-                setError(err.message || 'An unexpected error occurred');
-            } else {
-                setError('An unexpected error occurred');
+
+            if (response.statusCode >= 400) {
+                const errorMessage = handleAuthError({
+                    response: {
+                        status: response.statusCode,
+                        data: response.data,
+                    },
+                });
+                setError(errorMessage);
+                return false;
             }
-            throw err;
+
+            setOtpSent(true);
+            return true;
+        } catch (err: unknown) {
+            console.error('Login error:', err);
+            const errorMessage = handleAuthError(err);
+            setError(errorMessage);
+            return false;
         }
     };
 
@@ -125,16 +164,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setError('Failed to load user information');
                     throw error;
                 }
+                return true;
             }
+
+            setError('Invalid response from server');
+            return false;
         } catch (err: unknown) {
-            if (isApiError(err)) {
-                setError(err.response?.data?.message || err.message || 'Invalid OTP');
-            } else if (err instanceof Error) {
-                setError(err.message || 'An unexpected error occurred');
-            } else {
-                setError('An unexpected error occurred');
-            }
-            throw err;
+            console.error('OTP verification error:', err);
+            const errorMessage = handleAuthError(err);
+            setError(errorMessage);
+            return false;
         }
     };
 
@@ -147,28 +186,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const validateAuth = useCallback(async () => {
-        const token = localStorage.getItem('access_token');
+        const accessToken = localStorage.getItem('access_token');
+        const refreshTokenValue = localStorage.getItem('refresh_token');
 
-        if (!token) {
+        if (!accessToken && !refreshTokenValue) {
             setIsLoading(false);
             return;
         }
 
         try {
-            const userInfo = await loadUserFromToken(token);
-            if (userInfo) {
-                setUser(userInfo);
-                setIsAuthenticated(true);
-            } else {
-                logout();
+            if (accessToken) {
+                const userInfo = await loadUserFromToken(accessToken);
+                if (userInfo) {
+                    setUser(userInfo);
+                    setIsAuthenticated(true);
+                    setIsLoading(false);
+                    return;
+                }
             }
+
+            /* if access token failed or does not exist, we try to refresh token */
+            if (refreshTokenValue) {
+                const response = await authService.refreshToken();
+                if (response.data?.data?.access_token) {
+                    localStorage.setItem('access_token', response.data.data.access_token);
+                    localStorage.setItem('refresh_token', response.data.data.refresh_token);
+
+                    const userInfo = await loadUserFromToken(response.data.data.access_token);
+                    if (userInfo) {
+                        setUser(userInfo);
+                        setIsAuthenticated(true);
+                        setIsLoading(false);
+                        return;
+                    }
+                }
+            }
+
+            logout();
         } catch (err) {
             console.error('Auth validation failed:', err);
             logout();
         } finally {
             setIsLoading(false);
         }
-    }, [logout]);
+    }, [logout, authService]);
 
     useEffect(() => {
         validateAuth();
@@ -201,8 +262,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     const response = await authService.refreshToken();
                     if (response.data) {
-                        localStorage.setItem('access_token', response.data.accessToken);
-                        localStorage.setItem('refresh_token', response.data.refreshToken);
+                        localStorage.setItem('access_token', response.data.data.access_token);
+                        localStorage.setItem('refresh_token', response.data.data.refresh_token);
                     }
                 } catch (err) {
                     console.error('Token refresh failed:', err);
@@ -216,6 +277,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => clearInterval(interval);
     }, [isAuthenticated, authService, logout]);
 
+    const resendOtp = async (email: string, password: string): Promise<boolean> => {
+        return await sendOtp(email, password);
+    };
+
+    const resetOtp = useCallback(() => {
+        setOtpSent(false);
+        setTempEmail('');
+        setError(null);
+    }, []);
+
     return (
         <AuthContext.Provider
             value={{
@@ -227,7 +298,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 error,
                 verifyOtp,
                 otpSent,
+                resendOtp,
                 sendOtp,
+                resetOtp,
             }}
         >
             {children}

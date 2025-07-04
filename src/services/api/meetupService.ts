@@ -72,6 +72,22 @@ export const useMeetupService = () => {
                 });
             },
 
+            updateMeetupMedia: async (id: number, imageFile: File): Promise<ApiResponse<MeetupResponse>> => {
+                const accessToken = localStorage.getItem('access_token');
+                const formData = new FormData();
+                formData.append('file', imageFile);
+
+                return await fetchData<MeetupResponse>({
+                    endpoint: `/admin/meetups/${id}/media`,
+                    method: 'PUT',
+                    data: formData,
+                    customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            },
+
             deleteMeetup: async (id: number): Promise<ApiResponse<string>> => {
                 return await fetchData<string>({
                     endpoint: `/meetups/${id}`,

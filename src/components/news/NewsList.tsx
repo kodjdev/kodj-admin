@@ -1,13 +1,19 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useNewsService } from '@/services/api/newsService';
+import React from 'react';
 import { News } from '@/types/news';
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/common/Table';
+
+type NewsListProps = {
+    newsList: News[];
+    loading: boolean;
+    error: string | null;
+    onDelete: (id: number) => void;
+    onEdit: (id: number) => void;
+    onCreate: () => void;
+    onRefresh?: () => void;
+};
 
 const Container = styled.div`
     display: flex;
@@ -83,84 +89,109 @@ const TypeBadge = styled.span<{ type: string }>`
     }};
 `;
 
-export default function NewsList() {
-    const router = useRouter();
-    const { getNews, deleteNews, loading, error } = useNewsService();
-    const [newsList, setNewsList] = useState<News[]>([]);
-
-    useEffect(() => {
-        fetchNews();
-    }, []);
-
-    const fetchNews = async () => {
-        try {
-            const response = await getNews();
-            setNewsList(response.data);
-        } catch (err) {
-            console.error('Failed to fetch news:', err);
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (window.confirm('Are you sure you want to delete this news item?')) {
-            try {
-                await deleteNews(id);
-                await fetchNews();
-            } catch (err) {
-                console.error('Failed to delete news:', err);
-            }
-        }
-    };
-
-    const handleEdit = (id: number) => {
-        router.push(`/news/${id}`);
-    };
-
-    const handleCreate = () => {
-        router.push('/news/new');
-    };
-
+export default function NewsList({ newsList, loading, error, onDelete, onEdit, onCreate, onRefresh }: NewsListProps) {
     return (
         <Container>
             <HeaderContainer>
                 <PageTitle>News Management</PageTitle>
-                <AddButton onClick={handleCreate}>Add News</AddButton>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {onRefresh && (
+                        <AddButton variant="secondary" onClick={onRefresh} disabled={loading}>
+                            {loading ? 'Loading...' : 'Refresh'}
+                        </AddButton>
+                    )}
+                    <AddButton onClick={onCreate}>Add News</AddButton>
+                </div>
             </HeaderContainer>
 
+            {error && (
+                <div
+                    style={{
+                        background: '#ff4444',
+                        color: 'white',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                    }}
+                >
+                    {error}
+                    {onRefresh && (
+                        <button onClick={onRefresh} style={{ marginLeft: '12px' }}>
+                            Retry
+                        </button>
+                    )}
+                </div>
+            )}
+
             <TableCard>
-                <Table>
-                    <Thead>
-                        <tr>
-                            <Th>TITLE</Th>
-                            <Th>TYPE</Th>
-                            <Th>AUTHOR</Th>
-                            <Th>CREATED AT</Th>
-                            <Th>ACTIONS</Th>
-                        </tr>
-                    </Thead>
-                    <Tbody>
-                        {newsList.map((news) => (
-                            <Tr key={news.id}>
-                                <Td>{news.title}</Td>
-                                <Td>
-                                    <TypeBadge type={news.type}>{news.type}</TypeBadge>
-                                </Td>
-                                <Td>{news.user.username}</Td>
-                                <Td>{new Date(news.createdAt).toLocaleDateString()}</Td>
-                                <Td>
-                                    <ActionButtons>
-                                        <ActionButton size="sm" variant="secondary" onClick={() => handleEdit(news.id)}>
-                                            Edit
-                                        </ActionButton>
-                                        <ActionButton size="sm" variant="error" onClick={() => handleDelete(news.id)}>
-                                            Delete
-                                        </ActionButton>
-                                    </ActionButtons>
-                                </Td>
-                            </Tr>
-                        ))}
-                    </Tbody>
-                </Table>
+                {loading ? (
+                    <div
+                        style={{
+                            padding: '40px',
+                            textAlign: 'center',
+                            color: '#666',
+                        }}
+                    >
+                        Loading news...
+                    </div>
+                ) : (
+                    <Table>
+                        <Thead>
+                            <tr>
+                                <Th>TITLE</Th>
+                                <Th>TYPE</Th>
+                                <Th>AUTHOR</Th>
+                                <Th>CREATED AT</Th>
+                                <Th>ACTIONS</Th>
+                            </tr>
+                        </Thead>
+                        <Tbody>
+                            {newsList.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        style={{
+                                            textAlign: 'center',
+                                            padding: '40px',
+                                            color: '#666',
+                                        }}
+                                    >
+                                        No news found
+                                    </td>
+                                </tr>
+                            ) : (
+                                newsList.map((news) => (
+                                    <Tr key={news.id}>
+                                        <Td>{news.title}</Td>
+                                        <Td>
+                                            <TypeBadge type={news.type}>{news.type}</TypeBadge>
+                                        </Td>
+                                        <Td>{news.user?.username || 'Unknown'}</Td>
+                                        <Td>{new Date(news.createdAt).toLocaleDateString()}</Td>
+                                        <Td>
+                                            <ActionButtons>
+                                                <ActionButton
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => onEdit(news.id)}
+                                                >
+                                                    Edit
+                                                </ActionButton>
+                                                <ActionButton
+                                                    size="sm"
+                                                    variant="error"
+                                                    onClick={() => onDelete(news.id)}
+                                                >
+                                                    Delete
+                                                </ActionButton>
+                                            </ActionButtons>
+                                        </Td>
+                                    </Tr>
+                                ))
+                            )}
+                        </Tbody>
+                    </Table>
+                )}
             </TableCard>
         </Container>
     );

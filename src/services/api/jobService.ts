@@ -10,7 +10,7 @@ export const useJobService = () => {
         () => ({
             getJobPosts: async (params?: PaginationParams): Promise<ApiResponse<JobPost[]>> => {
                 return fetchData<JobPost[]>({
-                    endpoint: '/job-posts',
+                    endpoint: '/public/job-posts',
                     method: 'GET',
                     params,
                 });
@@ -18,7 +18,7 @@ export const useJobService = () => {
 
             getJobPostById: async (id: number): Promise<ApiResponse<JobPost>> => {
                 return fetchData<JobPost>({
-                    endpoint: `/job-posts/${id}`,
+                    endpoint: `/public/job-posts/${id}`,
                     method: 'GET',
                 });
             },
@@ -37,7 +37,7 @@ export const useJobService = () => {
                 });
 
                 return fetchData<JobPost>({
-                    endpoint: '/job-posts',
+                    endpoint: '/admin/job-posts',
                     method: 'POST',
                     data: formData,
                     customHeaders: {
@@ -48,7 +48,7 @@ export const useJobService = () => {
 
             updateJobPost: async (id: number, jobData: Partial<JobFormData>): Promise<ApiResponse<JobPost>> => {
                 return fetchData<JobPost>({
-                    endpoint: `/job-posts/${id}`,
+                    endpoint: `/admin/job-posts/${id}`,
                     method: 'PUT',
                     data: jobData,
                 });
@@ -56,7 +56,7 @@ export const useJobService = () => {
 
             deleteJobPost: async (id: number): Promise<ApiResponse<string>> => {
                 return fetchData<string>({
-                    endpoint: `/job-posts/${id}`,
+                    endpoint: `/admin/job-posts/${id}`,
                     method: 'DELETE',
                 });
             },

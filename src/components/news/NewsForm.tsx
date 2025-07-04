@@ -20,12 +20,22 @@ const HiddenFileInput = styled.input`
 `;
 
 type NewsFormProps = {
-    newsId?: string;
+    initialData?: NewsFormData;
+    loading?: boolean;
+    error?: string | null;
+    onSubmit: (formData: NewsFormData) => Promise<void>;
+    onCancel: () => void;
+    isEdit?: boolean;
 };
 
-export default function NewsForm({ newsId }: NewsFormProps) {
-    const router = useRouter();
-    const { createNews, updateNews, getNewsById, loading, error } = useNewsService();
+export default function NewsForm({
+    initialData,
+    loading = false,
+    error = null,
+    onSubmit,
+    onCancel,
+    isEdit = false,
+}: NewsFormProps) {
     const [formData, setFormData] = useState<NewsFormData>({
         title: '',
         content: '',
@@ -39,31 +49,25 @@ export default function NewsForm({ newsId }: NewsFormProps) {
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
 
+    // Populate form with initial data
+    console.log('Initial Data:', initialData);
     useEffect(() => {
-        if (newsId) {
-            fetchNewsDetails();
-        }
-    }, [newsId]);
-
-    const fetchNewsDetails = async () => {
-        try {
-            const response = await getNewsById(Number(newsId));
-            const news = response.data;
+        if (initialData) {
             setFormData({
-                title: news.title,
-                content: news.content,
-                type: news.type,
-                contactPhone: news.contactPhone || '',
-                contactEmail: news.contactEmail || '',
-                twitterProfile: news.twitterProfile || '',
-                linkedinProfile: news.linkedinProfile || '',
-                facebookProfile: news.facebookProfile || '',
-                instagramHandle: news.instagramHandle || '',
+                id: initialData.id,
+                userId: initialData.userId,
+                title: initialData.title || '',
+                content: initialData.content || '',
+                type: initialData.type || 'GENERAL',
+                contactPhone: initialData.contactPhone || '',
+                contactEmail: initialData.contactEmail || '',
+                twitterProfile: initialData.twitterProfile || '',
+                linkedinProfile: initialData.linkedinProfile || '',
+                facebookProfile: initialData.facebookProfile || '',
+                instagramHandle: initialData.instagramHandle || '',
             });
-        } catch (err) {
-            console.error('Failed to fetch news details:', err);
         }
-    };
+    }, [initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -82,34 +86,34 @@ export default function NewsForm({ newsId }: NewsFormProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        try {
-            const submitData = {
-                ...formData,
-                imageFile: imageFile || undefined,
-            };
+        const submitData = {
+            ...formData,
+            imageFile: imageFile || undefined,
+        };
 
-            if (newsId) {
-                await updateNews(Number(newsId), submitData);
-            } else {
-                await createNews(submitData);
-            }
-
-            router.push('/news');
-        } catch (err) {
-            console.error('Failed to save news:', err);
-        }
-    };
-
-    const handleCancel = () => {
-        router.push('/news');
+        await onSubmit(submitData);
     };
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>{newsId ? 'Edit News' : 'Create News'}</CardTitle>
+                <CardTitle>{isEdit ? 'Edit News' : 'Create News'}</CardTitle>
             </CardHeader>
             <CardContent>
+                {error && (
+                    <div
+                        style={{
+                            background: '#ff4444',
+                            color: 'white',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            marginBottom: '16px',
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
                 <Form onSubmit={handleSubmit}>
                     <FormGroup>
                         <Label htmlFor="title">Title *</Label>
@@ -228,7 +232,7 @@ export default function NewsForm({ newsId }: NewsFormProps) {
                     </FormGroup>
 
                     <FormActions>
-                        <Button type="button" variant="secondary" onClick={handleCancel}>
+                        <Button type="button" variant="secondary" onClick={onCancel}>
                             Cancel
                         </Button>
                         <Button type="submit" variant="primary" disabled={loading}>

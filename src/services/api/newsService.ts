@@ -1,5 +1,5 @@
 import { ApiResponse, PaginationParams } from '@/types/common';
-import { News, NewsFormData } from '@/types/news';
+import { News, NewsFormData, PaginatedResponse } from '@/types/news';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 
@@ -8,17 +8,27 @@ export const useNewsService = () => {
 
     return useMemo(
         () => ({
-            getNews: async (params?: PaginationParams): Promise<ApiResponse<News[]>> => {
-                return fetchData<News[]>({
-                    endpoint: '/news',
+            getNews: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<News[]>>> => {
+                const response = await fetchData<{
+                    data: PaginatedResponse<News[]>;
+                    message: string;
+                    statusCode: number;
+                }>({
+                    endpoint: '/public/news',
                     method: 'GET',
                     params,
                 });
+
+                return {
+                    data: response.data.data,
+                    statusCode: response.statusCode,
+                    message: response.message,
+                };
             },
 
             getNewsById: async (id: number): Promise<ApiResponse<News>> => {
                 return fetchData<News>({
-                    endpoint: `/news/${id}`,
+                    endpoint: `/public/news/${id}`,
                     method: 'GET',
                 });
             },
@@ -37,7 +47,7 @@ export const useNewsService = () => {
                 });
 
                 return fetchData<News>({
-                    endpoint: '/news',
+                    endpoint: '/admin/news',
                     method: 'POST',
                     data: formData,
                     customHeaders: {
@@ -48,7 +58,7 @@ export const useNewsService = () => {
 
             updateNews: async (id: number, newsData: Partial<NewsFormData>): Promise<ApiResponse<News>> => {
                 return fetchData<News>({
-                    endpoint: `/news/${id}`,
+                    endpoint: `/admin/news/${id}`,
                     method: 'PUT',
                     data: newsData,
                 });
@@ -56,7 +66,7 @@ export const useNewsService = () => {
 
             deleteNews: async (id: number): Promise<ApiResponse<string>> => {
                 return fetchData<string>({
-                    endpoint: `/news/${id}`,
+                    endpoint: `/admin/news/${id}`,
                     method: 'DELETE',
                 });
             },

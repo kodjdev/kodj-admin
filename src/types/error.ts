@@ -1,6 +1,7 @@
 export type ApiErrorResponse = {
     data?: ApiErrorData;
     message?: string;
+    statusCode?: number;
 };
 
 type ApiErrorData = {
@@ -8,16 +9,21 @@ type ApiErrorData = {
     [key: string]: any;
 };
 
-export class ApiError extends Error {
-    response?: ApiErrorResponse;
-
-    constructor(message: string, response?: ApiErrorResponse) {
-        super(message);
-        this.name = 'ApiError';
-        this.response = response;
-    }
-}
+export type ApiError = {
+    response?: {
+        statusCode: number;
+        data: {
+            message?: string;
+        };
+    };
+    message?: string;
+};
 
 export function isApiError(error: unknown): error is ApiError {
-    return error instanceof ApiError && 'response' in error;
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        ('response' in error || 'message' in error) &&
+        (typeof (error as any).response === 'object' || typeof (error as any).message === 'string')
+    );
 }

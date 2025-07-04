@@ -17,6 +17,35 @@ export type News = {
     createdAt: string;
 };
 
+export type PaginatedResponse<T> = {
+    content: T[];
+    pageAble: {
+        pageNumber: number;
+        pageSize: number;
+        sort: {
+            empty: boolean;
+            sorted: boolean;
+            unsorted: boolean;
+        };
+        offset: number;
+        paged: boolean;
+        unpaged: boolean;
+    };
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
+};
+
 export type NewsFormData = {
     id?: number;
     userId?: number;
