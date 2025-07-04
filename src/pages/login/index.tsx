@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthProvider';
 import LoginForm from '@/components/auth/LoginForm';
 
 export default function LoginPage() {
-    const { sendOtp, verifyOtp, otpSent, error } = useAuth();
+    const { sendOtp, verifyOtp, otpSent, error, resendOtp } = useAuth();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -15,8 +15,8 @@ export default function LoginPage() {
             setEmail(email);
             setPassword(password);
             await sendOtp(email, password);
-        } catch (_) {
-            /* handled in context */
+        } catch (error) {
+            console.error('Login failed:', error);
         } finally {
             setLoading(false);
         }
@@ -33,6 +33,17 @@ export default function LoginPage() {
         }
     };
 
+    const handleReSendOtp = async () => {
+        try {
+            setLoading(true);
+            await resendOtp(email, password);
+        } catch (error) {
+            console.error('Resend OTP failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <LoginForm
             onSubmit={handleLogin}
@@ -42,6 +53,7 @@ export default function LoginPage() {
             otpSent={otpSent}
             otp={otp}
             setOtp={setOtp}
+            onResendOtp={handleReSendOtp}
         />
     );
 }

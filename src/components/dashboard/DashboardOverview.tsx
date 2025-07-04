@@ -1,11 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
-import { useNewsService } from '@/services/api/newsService';
-import { useMeetupService } from '@/services/api/meetupService';
-import { useJobService } from '@/services/api/jobService';
+
+type DashboardOverviewProps = {
+    stats: {
+        totalUsers: number;
+        activeEvents: number;
+        pastEvents: number;
+        jobPosts: number;
+        speakers: number;
+        news: number;
+        userGrowth: number;
+        eventGrowth: number;
+        jobGrowth: number;
+        newsGrowth: number;
+    };
+    loading: boolean;
+    onRefresh?: () => void;
+};
 
 const DashboardContainer = styled.div`
     display: flex;
@@ -162,86 +176,16 @@ const Tab = styled.button<{ $active?: boolean }>`
     }
 `;
 
-const IconWrapper = styled.div<{ $color?: string }>`
-    width: 48px;
-    height: 48px;
-    border-radius: ${themeColors.cardBorder.md};
-    background-color: ${(props) => props.$color || themeColors.colors.primary.main}20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-`;
-
-const LoadingState = styled.div`
-    text-align: center;
-    padding: ${themeColors.spacing.xl};
-    color: ${themeColors.colors.neutral.gray500};
-`;
-
-export default function DashboardOverview() {
+export default function DashboardOverview({ stats, loading, onRefresh }: DashboardOverviewProps) {
     const [activeTab, setActiveTab] = useState<'3months' | '30days' | '7days'>('30days');
-    const [stats, setStats] = useState({
-        totalUsers: 0,
-        activeEvents: 0,
-        pastEvents: 0,
-        jobPosts: 0,
-        speakers: 0,
-        news: 0,
-        userGrowth: 12.5,
-        eventGrowth: -8.2,
-        jobGrowth: 25.3,
-        newsGrowth: 15.7,
-    });
-    const [loading, setLoading] = useState(true);
 
-    const { getNews } = useNewsService();
-    const { getMeetups } = useMeetupService();
-    const { getJobPosts } = useJobService();
-
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
-        try {
-            setLoading(true);
-
-            const [newsResponse, meetupsResponse, jobsResponse] = await Promise.all([
-                getNews(),
-                getMeetups(),
-                getJobPosts(),
-            ]);
-
-            const now = new Date();
-            const meetups = meetupsResponse.data || [];
-            const activeEvents = meetups.filter((m) => new Date(m.meetupDate) >= now).length;
-            const pastEvents = meetups.filter((m) => new Date(m.meetupDate) < now).length;
-
-            const speakerCount = 45; // Placeholder - implement actual speaker counting
-
-            setStats({
-                totalUsers: 1234,
-                activeEvents,
-                pastEvents,
-                jobPosts: jobsResponse.data?.length || 0,
-                speakers: speakerCount,
-                news: newsResponse.data?.length || 0,
-                userGrowth: 12.5,
-                eventGrowth: activeEvents > 0 ? 8.2 : -8.2,
-                jobGrowth: 25.3,
-                newsGrowth: 15.7,
-            });
-        } catch (error) {
-            console.error('Failed to fetch dashboard data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
     const statsData = [
         {
             label: 'Total Events',
-            value: (stats.activeEvents + stats.pastEvents).toString(),
+            value:
+                stats.activeEvents + stats.pastEvents > 0
+                    ? (stats.activeEvents + stats.pastEvents).toString()
+                    : 'Loading...',
             change: `${stats.eventGrowth > 0 ? '+' : ''}${Math.abs(stats.eventGrowth)}%`,
             positive: stats.eventGrowth > 0,
             trend: stats.eventGrowth > 0 ? 'Growing event participation' : 'Event participation declining',
@@ -250,7 +194,7 @@ export default function DashboardOverview() {
         },
         {
             label: 'Registered Users',
-            value: stats.totalUsers.toLocaleString(),
+            value: loading ? 'Loading...' : stats.totalUsers.toLocaleString(),
             change: `+${stats.userGrowth}%`,
             positive: true,
             trend: 'User base expanding',
@@ -259,7 +203,7 @@ export default function DashboardOverview() {
         },
         {
             label: 'Total Speakers',
-            value: stats.speakers.toString(),
+            value: loading ? 'Loading...' : stats.speakers.toString(),
             change: '+18%',
             positive: true,
             trend: 'Speaker network growing',
@@ -268,7 +212,7 @@ export default function DashboardOverview() {
         },
         {
             label: 'Job Postings',
-            value: stats.jobPosts.toString(),
+            value: loading ? 'Loading...' : stats.jobPosts.toString(),
             change: `+${stats.jobGrowth}%`,
             positive: true,
             trend: 'Strong job market activity',
@@ -280,8 +224,10 @@ export default function DashboardOverview() {
     return (
         <DashboardContainer>
             <Header>
-                <Title>Dashboard</Title>
-                <Subtitle>Monitor your platform performance and key metrics</Subtitle>
+                <div>
+                    <Title>Dashboard</Title>
+                    <Subtitle>Monitor your platform performance and key metrics</Subtitle>
+                </div>
             </Header>
 
             <StatsGrid>
@@ -326,7 +272,6 @@ export default function DashboardOverview() {
                         </Tab>
                     </TabContainer>
                 </ChartHeader>
-                {/* Add your chart component here */}
                 <div
                     style={{
                         height: '300px',

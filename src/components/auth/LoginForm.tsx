@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
+import StyledOtpSection from '@/components/auth/OtpSelection';
 
 type LoginFormProps = {
     onSubmit: (email: string, password: string) => Promise<void>;
@@ -12,6 +13,7 @@ type LoginFormProps = {
     otpSent: boolean;
     otp: string;
     setOtp: (otp: string) => void;
+    onResendOtp?: (email: string, password: string) => Promise<void>;
 };
 
 const LoginContainer = styled.div`
@@ -191,6 +193,7 @@ export default function LoginForm({
     otpSent,
     otp,
     setOtp,
+    onResendOtp,
 }: LoginFormProps) {
     const [formData, setFormData] = useState({
         email: '',
@@ -256,18 +259,23 @@ export default function LoginForm({
                         )}
 
                         {otpSent && (
-                            <InputGroup>
-                                <Input
-                                    type="text"
-                                    name="otp"
-                                    placeholder="Enter OTP code"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value)}
-                                    required
-                                />
-                            </InputGroup>
+                            <StyledOtpSection
+                                email={formData.email}
+                                otp={otp}
+                                onOtpChange={setOtp}
+                                onBackClick={() => {
+                                    setOtp('');
+                                    setFormData({ email: '', password: '' });
+                                }}
+                                onResendClick={() => {
+                                    if (onResendOtp) {
+                                        onResendOtp(formData.email, formData.password);
+                                    }
+                                }}
+                                resendDisabled={false}
+                                resendCountdown={0}
+                            />
                         )}
-
                         <LoginButton type="submit" disabled={loading}>
                             {loading ? 'Processing...' : otpSent ? 'Verify OTP' : 'Send OTP'}
                         </LoginButton>

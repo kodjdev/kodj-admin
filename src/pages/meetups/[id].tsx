@@ -11,7 +11,7 @@ import { useStatusHandler } from '@/hooks/useStatusCode';
 export default function EditMeetupPage() {
     const router = useRouter();
     const { id } = router.query;
-    const { getMeetupDetails, updateMeetup } = useMeetupService();
+    const { getMeetupDetails, updateMeetup, updateMeetupMedia } = useMeetupService();
     const [messageApi, contextHolder] = message.useMessage();
     const { handleAsyncOperation } = useStatusHandler(messageApi);
 
@@ -85,13 +85,35 @@ export default function EditMeetupPage() {
         );
     };
 
+    const handleImageUpdate = async (imageFile: File) => {
+        await handleAsyncOperation(
+            async () => {
+                const response = await updateMeetupMedia(Number(id), imageFile);
+                if (response.statusCode !== 200) {
+                    throw new Error('Failed to update image');
+                }
+                return response;
+            },
+            {
+                loadingMessage: 'Updating image...',
+                successMessage: 'Image updated successfully!',
+                errorMessage: 'Failed to update image',
+            },
+        );
+    };
+
     if (loading) return <p>Loading...</p>;
     if (!formData) return <p>No data found for this meetup</p>;
 
     return (
         <>
             {contextHolder}
-            <MeetupForm meetupId={String(id)} initialData={formData} onSubmit={handleUpdate} />
+            <MeetupForm
+                meetupId={String(id)}
+                initialData={formData}
+                onSubmit={handleUpdate}
+                onImageUpdate={handleImageUpdate}
+            />
         </>
     );
 }

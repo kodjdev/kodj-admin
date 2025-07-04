@@ -9,6 +9,13 @@ import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 
+type MeetupFormProps = {
+    meetupId?: string;
+    onSubmit?: (formData: Meetup, imageFile?: File | null) => Promise<void>;
+    initialData?: MeetupFormData;
+    onImageUpdate?: (imageFile: File) => Promise<void>;
+};
+
 const FormActions = styled.div`
     display: flex;
     gap: ${themeColors.spacing.md};
@@ -27,13 +34,7 @@ const CheckboxWrapper = styled.div`
     color: #b3b3b3;
 `;
 
-type MeetupFormProps = {
-    meetupId?: string;
-    onSubmit?: (formData: Meetup, imageFile?: File | null) => Promise<void>;
-    initialData?: MeetupFormData;
-};
-
-export default function MeetupForm({ meetupId, initialData, onSubmit }: MeetupFormProps) {
+export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpdate }: MeetupFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState<Meetup>({
         title: '',
@@ -48,6 +49,7 @@ export default function MeetupForm({ meetupId, initialData, onSubmit }: MeetupFo
         image: '',
     });
     const [imageFile, setImageFile] = useState<{ name: string; preview?: string } | null>(null);
+    const [isUpdatingImage, setIsUpdatingImage] = useState(false);
 
     useEffect(() => {
         if (!initialData || !initialData.title) return;
@@ -96,9 +98,29 @@ export default function MeetupForm({ meetupId, initialData, onSubmit }: MeetupFo
         }
     };
 
+    const handleImageUpdate = async () => {
+        if (!onImageUpdate || !imageFile || !(imageFile as any)?.file) {
+            console.error('No image file selected or onImageUpdate not provided');
+            return;
+        }
+
+        const file = (imageFile as any).file;
+        console.log('Updating image with file:', file);
+
+        setIsUpdatingImage(true);
+        try {
+            await onImageUpdate(file);
+        } catch (error) {
+            console.error('Failed to update image:', error);
+        } finally {
+            setIsUpdatingImage(false);
+        }
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            console.log('Selected file:', file);
             setImageFile({
                 name: file.name,
                 preview: URL.createObjectURL(file),
@@ -250,6 +272,17 @@ export default function MeetupForm({ meetupId, initialData, onSubmit }: MeetupFo
                                         alt="Selected"
                                         style={{ marginTop: '6px', height: '100px', borderRadius: '8px' }}
                                     />
+                                )}
+                                {meetupId && onImageUpdate && imageFile && (imageFile as any)?.file instanceof File && (
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={handleImageUpdate}
+                                        disabled={isUpdatingImage}
+                                        style={{ marginTop: '8px' }}
+                                    >
+                                        {isUpdatingImage ? 'Updating...' : 'Update Image'}
+                                    </Button>
                                 )}
                             </div>
                         )}
