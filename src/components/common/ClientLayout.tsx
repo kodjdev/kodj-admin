@@ -178,7 +178,9 @@ export default function ClientLayout({ children }: LayoutProps) {
     return (
         <LayoutContainer>
             <Sidebar>
-                <Logo>Kodj Admin</Logo>
+                <Link href="/" style={{ textDecoration: 'none' }}>
+                    <Logo>Kodj Admin</Logo>
+                </Link>
 
                 <NavSection>
                     <NavGroup>

@@ -46,11 +46,14 @@ export const useNewsService = () => {
                     }
                 });
 
+                const accessToken = localStorage.getItem('access_token');
+
                 return fetchData<News>({
                     endpoint: '/admin/news',
                     method: 'POST',
                     data: formData,
                     customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'multipart/form-data',
                     },
                 });

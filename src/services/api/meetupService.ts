@@ -49,11 +49,14 @@ export const useMeetupService = () => {
                     }
                 });
 
+                const accessToken = localStorage.getItem('access_token');
+
                 return await fetchData<Meetup>({
-                    endpoint: '/meetups',
+                    endpoint: '/admin/meetups',
                     method: 'POST',
                     data: formData,
                     customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'multipart/form-data',
                     },
                 });
@@ -95,7 +98,6 @@ export const useMeetupService = () => {
                 });
             },
 
-            // Speaker endpoints
             addSpeaker: async (meetupId: number, speakerData: SpeakerFormData): Promise<ApiResponse<Speaker>> => {
                 const formData = new FormData();
 
@@ -109,11 +111,14 @@ export const useMeetupService = () => {
                     }
                 });
 
+                const accessToken = localStorage.getItem('access_token');
+
                 return await fetchData<Speaker>({
-                    endpoint: `/meetups/${meetupId}/speakers`,
+                    endpoint: `admin/meetups/${meetupId}/speakers`,
                     method: 'POST',
                     data: formData,
                     customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'multipart/form-data',
                     },
                 });
@@ -138,7 +143,6 @@ export const useMeetupService = () => {
                 });
             },
 
-            // Note endpoints
             addNote: async (meetupId: number, noteData: NoteFormData): Promise<ApiResponse<Note>> => {
                 return await fetchData<Note>({
                     endpoint: `/meetups/${meetupId}/notes`,

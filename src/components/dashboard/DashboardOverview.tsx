@@ -3,24 +3,24 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
+import PlatformActivityChart from '@/components/dashboard/PlatformActivityChart';
 
 type DashboardOverviewProps = {
     stats: {
         totalUsers: number;
+        totalEvents: number;
+        totalSpeakers: number;
         activeEvents: number;
         pastEvents: number;
-        jobPosts: number;
-        speakers: number;
-        news: number;
         userGrowth: number;
         eventGrowth: number;
-        jobGrowth: number;
-        newsGrowth: number;
+        speakerGrowth: number;
     };
     loading: boolean;
     onRefresh?: () => void;
 };
 
+export type ActiveTabs = '3months' | '30days' | '7days';
 const DashboardContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -131,13 +131,6 @@ const ChartContainer = styled.div`
     margin-top: ${themeColors.spacing.xl};
 `;
 
-const ChartHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: ${themeColors.spacing.lg};
-`;
-
 const ChartTitle = styled.h3`
     color: ${themeColors.colors.neutral.white};
     font-size: ${themeColors.typography.headings.desktop.h4.fontSize}px;
@@ -176,48 +169,78 @@ const Tab = styled.button<{ $active?: boolean }>`
     }
 `;
 
-export default function DashboardOverview({ stats, loading, onRefresh }: DashboardOverviewProps) {
-    const [activeTab, setActiveTab] = useState<'3months' | '30days' | '7days'>('30days');
+const ChartHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: ${themeColors.spacing.lg};
+    flex-wrap: wrap;
+    gap: ${themeColors.spacing.md};
+`;
+
+const LegendContainer = styled.div`
+    display: flex;
+    gap: ${themeColors.spacing.lg};
+    align-items: center;
+    margin-right: ${themeColors.spacing.md};
+`;
+
+const LegendItem = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${themeColors.spacing.xs};
+    font-size: ${themeColors.typography.body.small.fontSize}px;
+    color: ${themeColors.dark.textSecondary};
+`;
+
+const LegendDot = styled.div<{ $color: string }>`
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: ${(props) => props.$color};
+`;
+
+export default function DashboardOverview({ stats, loading }: DashboardOverviewProps) {
+    const [activeTab, setActiveTab] = useState<ActiveTabs>('30days');
 
     const statsData = [
         {
             label: 'Total Events',
-            value:
-                stats.activeEvents + stats.pastEvents > 0
-                    ? (stats.activeEvents + stats.pastEvents).toString()
-                    : 'Loading...',
-            change: `${stats.eventGrowth > 0 ? '+' : ''}${Math.abs(stats.eventGrowth)}%`,
+            value: loading ? 'Loading...' : stats.totalEvents.toString(),
+            change: `${stats.eventGrowth > 0 ? '+' : ''}${Math.abs(stats.eventGrowth).toFixed(1)}%`,
             positive: stats.eventGrowth > 0,
-            trend: stats.eventGrowth > 0 ? 'Growing event participation' : 'Event participation declining',
+            trend: stats.eventGrowth > 0 ? 'Growing event participation' : 'Event participation stable',
             description: `${stats.activeEvents} upcoming, ${stats.pastEvents} completed`,
-            trendIcon: stats.eventGrowth > 0 ? '📈' : '📉',
+            trendIcon: stats.eventGrowth > 0 ? '📈' : '📊',
         },
         {
             label: 'Registered Users',
             value: loading ? 'Loading...' : stats.totalUsers.toLocaleString(),
-            change: `+${stats.userGrowth}%`,
-            positive: true,
-            trend: 'User base expanding',
+            change: `+${stats.userGrowth.toFixed(1)}%`,
+            positive: stats.userGrowth > 0,
+            trend: stats.userGrowth > 0 ? 'User base expanding' : 'User growth stable',
             description: 'Active platform members',
-            trendIcon: '📈',
+            trendIcon: stats.userGrowth > 0 ? '📈' : '📊',
         },
         {
             label: 'Total Speakers',
-            value: loading ? 'Loading...' : stats.speakers.toString(),
-            change: '+18%',
-            positive: true,
-            trend: 'Speaker network growing',
+            value: loading ? 'Loading...' : (stats?.totalSpeakers?.toString() ?? '0'),
+            change: `+${stats?.speakerGrowth?.toFixed(1) ?? '0'}%`,
+            positive: stats.speakerGrowth > 0,
+            trend: stats.speakerGrowth > 0 ? 'Speaker network growing' : 'Speaker network stable',
             description: 'Verified event speakers',
-            trendIcon: '📈',
+            trendIcon: stats.speakerGrowth > 0 ? '📈' : '📊',
         },
         {
-            label: 'Job Postings',
-            value: loading ? 'Loading...' : stats.jobPosts.toString(),
-            change: `+${stats.jobGrowth}%`,
+            label: 'Platform Activity',
+            value: loading
+                ? 'Loading...'
+                : `${(((stats.totalUsers || 0) + (stats.totalEvents || 0) + (stats.totalSpeakers || 0)) / 3).toFixed(0)}`,
+            change: `+${(((stats.userGrowth || 0) + (stats.eventGrowth || 0) + (stats.speakerGrowth || 0)) / 3).toFixed(1)}%`,
             positive: true,
-            trend: 'Strong job market activity',
-            description: 'Active job opportunities',
-            trendIcon: '📈',
+            trend: 'Overall platform growth',
+            description: 'Combined activity score',
+            trendIcon: '🚀',
         },
     ];
 
@@ -260,29 +283,35 @@ export default function DashboardOverview({ stats, loading, onRefresh }: Dashboa
                         <ChartTitle>Platform Activity</ChartTitle>
                         <ChartSubtitle>User engagement over time</ChartSubtitle>
                     </div>
-                    <TabContainer>
-                        <Tab $active={activeTab === '7days'} onClick={() => setActiveTab('7days')}>
-                            Last 7 days
-                        </Tab>
-                        <Tab $active={activeTab === '30days'} onClick={() => setActiveTab('30days')}>
-                            Last 30 days
-                        </Tab>
-                        <Tab $active={activeTab === '3months'} onClick={() => setActiveTab('3months')}>
-                            Last 3 months
-                        </Tab>
-                    </TabContainer>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: themeColors.spacing.lg }}>
+                        <LegendContainer>
+                            <LegendItem>
+                                <LegendDot $color={themeColors.colors.success.main} />
+                                <span>Users</span>
+                            </LegendItem>
+                            <LegendItem>
+                                <LegendDot $color={themeColors.colors.primary.main} />
+                                <span>Events</span>
+                            </LegendItem>
+                            <LegendItem>
+                                <LegendDot $color={themeColors.colors.secondary.main} />
+                                <span>Speakers</span>
+                            </LegendItem>
+                        </LegendContainer>
+                        <TabContainer>
+                            <Tab $active={activeTab === '7days'} onClick={() => setActiveTab('7days')}>
+                                Last 7 days
+                            </Tab>
+                            <Tab $active={activeTab === '30days'} onClick={() => setActiveTab('30days')}>
+                                Last 30 days
+                            </Tab>
+                            <Tab $active={activeTab === '3months'} onClick={() => setActiveTab('3months')}>
+                                Last 3 months
+                            </Tab>
+                        </TabContainer>
+                    </div>
                 </ChartHeader>
-                <div
-                    style={{
-                        height: '300px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: themeColors.colors.neutral.gray400,
-                    }}
-                >
-                    Chart visualization would go here
-                </div>
+                <PlatformActivityChart activeTab={activeTab} stats={stats} />
             </ChartContainer>
         </DashboardContainer>
     );
