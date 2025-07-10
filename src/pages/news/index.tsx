@@ -70,14 +70,17 @@ export default function NewsPage() {
     }, []);
 
     return (
-        <NewsList
-            newsList={newsList}
-            loading={loading}
-            error={error}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            onCreate={handleCreate}
-            onRefresh={fetchNews}
-        />
+        <>
+            {contextHolder}
+            <NewsList
+                newsList={newsList}
+                loading={loading}
+                error={error}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                onCreate={handleCreate}
+                onRefresh={fetchNews}
+            />
+        </>
     );
 }

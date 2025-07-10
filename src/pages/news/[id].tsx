@@ -137,13 +137,16 @@ export default function EditNewsPage() {
     }
 
     return (
-        <NewsForm
-            initialData={initialData}
-            loading={updating}
-            error={error}
-            onSubmit={handleUpdate}
-            onCancel={handleCancel}
-            isEdit={true}
-        />
+        <>
+            {contextHolder}
+            <NewsForm
+                initialData={initialData}
+                loading={updating}
+                error={error}
+                onSubmit={handleUpdate}
+                onCancel={handleCancel}
+                isEdit={true}
+            />
+        </>
     );
 }
