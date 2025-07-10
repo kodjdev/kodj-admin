@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MeetupList from '@/components/meetups/MeetupList';
 import { useMeetupService } from '@/services/api/meetupService';
@@ -10,12 +10,15 @@ export default function MeetupsPage() {
     const [meetups, setMeetups] = useState<Meetup[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const hasFetched = useRef(false);
 
     useEffect(() => {
         fetchMeetups();
     }, []);
 
     const fetchMeetups = async () => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         try {
             setLoading(true);
             const response = await getMeetups();

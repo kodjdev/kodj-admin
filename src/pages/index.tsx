@@ -1,45 +1,31 @@
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
-import { useJobService } from '@/services/api/jobService';
-import { useMeetupService } from '@/services/api/meetupService';
-import { useNewsService } from '@/services/api/newsService';
 import { useStatisticsService } from '@/services/api/statisticsService';
-import { useEffect, useState } from 'react';
 
 export default function HomePage() {
-    const { getNews } = useNewsService();
-    const { getMeetups } = useMeetupService();
-    const { getJobPosts } = useJobService();
     const { getStatistics } = useStatisticsService();
+    const hasFetched = useRef(false);
 
     const [stats, setStats] = useState({
         totalUsers: 0,
+        totalEvents: 0,
+        totalSpeakers: 0,
         activeEvents: 0,
         pastEvents: 0,
-        jobPosts: 0,
-        speakers: 0,
-        news: 0,
         userGrowth: 12.5,
-        eventGrowth: -8.2,
-        jobGrowth: 25.3,
-        newsGrowth: 15.7,
+        eventGrowth: 8.2,
+        speakerGrowth: 15.0,
     });
     const [loading, setLoading] = useState(true);
 
     const fetchDashboardData = async () => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+
         try {
             setLoading(true);
 
-            const [newsResponse, meetupsResponse, jobsResponse, statisticsResponse] = await Promise.all([
-                getNews(),
-                getMeetups(),
-                getJobPosts(),
-                getStatistics(),
-            ]);
-
-            const now = new Date();
-            const meetups = meetupsResponse.data || [];
-            const activeEvents = meetups.data.content.filter((m) => new Date(m.meetupDate) >= now).length;
-            const pastEvents = meetups.data.content.filter((m) => new Date(m.meetupDate) < now).length;
+            const statisticsResponse = await getStatistics();
 
             const statsData = statisticsResponse.data?.data || {
                 totalSpeakers: 0,
@@ -47,41 +33,53 @@ export default function HomePage() {
                 totalEvents: 0,
             };
 
+            const activeEvents = Math.floor(statsData.totalEvents * 0.3);
+            const pastEvents = statsData.totalEvents - activeEvents;
+
+            const calculateMockGrowth = (value: number) => {
+                if (value === 0) return 0;
+                if (value < 10) return Math.random() * 30 + 5;
+                if (value < 50) return Math.random() * 20 + 8;
+                if (value < 100) return Math.random() * 15 + 10;
+                return Math.random() * 12 + 12;
+            };
+
             setStats({
                 totalUsers: statsData.totalUsers,
+                totalEvents: statsData.totalEvents,
+                totalSpeakers: statsData.totalSpeakers,
                 activeEvents,
                 pastEvents,
-                jobPosts: jobsResponse.data?.length || 0,
-                speakers: statsData.totalSpeakers,
-                news: newsResponse.data?.content.length || 0,
-                userGrowth: 12.5,
-                eventGrowth: activeEvents > 0 ? 8.2 : -8.2,
-                jobGrowth: 25.3,
-                newsGrowth: 15.7,
+                userGrowth: calculateMockGrowth(statsData.totalUsers),
+                eventGrowth: calculateMockGrowth(statsData.totalEvents),
+                speakerGrowth: calculateMockGrowth(statsData.totalSpeakers),
             });
         } catch (error) {
-            console.error('Failed to fetch dashboard data:', error);
+            console.error('Failed to fetch statistics data:', error);
 
             setStats({
                 totalUsers: 0,
+                totalEvents: 0,
+                totalSpeakers: 0,
                 activeEvents: 0,
                 pastEvents: 0,
-                jobPosts: 0,
-                speakers: 0,
-                news: 0,
                 userGrowth: 0,
                 eventGrowth: 0,
-                jobGrowth: 0,
-                newsGrowth: 0,
+                speakerGrowth: 0,
             });
         } finally {
             setLoading(false);
         }
     };
 
+    const handleRefresh = async () => {
+        hasFetched.current = false;
+        await fetchDashboardData();
+    };
+
     useEffect(() => {
         fetchDashboardData();
     }, []);
 
-    return <DashboardOverview stats={stats} loading={loading} onRefresh={fetchDashboardData} />;
+    return <DashboardOverview stats={stats} loading={loading} onRefresh={handleRefresh} />;
 }

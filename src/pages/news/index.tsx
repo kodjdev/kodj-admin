@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useNewsService } from '@/services/api/newsService';
 import NewsList from '@/components/news/NewsList';
 import { News, PaginatedResponse } from '@/types/news';
+import { message } from 'antd';
 
 export default function NewsPage() {
     const router = useRouter();
@@ -10,15 +11,21 @@ export default function NewsPage() {
     const [newsList, setNewsList] = useState<News[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [messageApi, contextHolder] = message.useMessage();
+
+    const hasFetched = useRef(false);
 
     const fetchNews = async () => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+
         try {
             setLoading(true);
             setError(null);
             const response = await getNews();
 
             if (response.statusCode === 200 && response.data) {
-                console.log('Fetched news:', response.data);
+                messageApi.success('News loaded successfully');
                 const newsArray = Array.isArray(response.data.content) ? response.data.content : [];
                 setNewsList(newsArray.flat());
             } else {
@@ -36,10 +43,15 @@ export default function NewsPage() {
     const handleDelete = async (id: number) => {
         if (window.confirm('Are you sure you want to delete this news item?')) {
             try {
-                await deleteNews(id);
+                const response = await deleteNews(id);
+                if (response.statusCode !== 200) {
+                    messageApi.error('Failed to delete news');
+                }
+                messageApi.success('News deleted successfully');
                 await fetchNews();
             } catch (err) {
                 console.error('Failed to delete news:', err);
+                messageApi.error('Failed to delete news');
                 setError('Failed to delete news');
             }
         }

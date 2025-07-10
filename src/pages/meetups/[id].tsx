@@ -70,8 +70,10 @@ export default function EditMeetupPage() {
             async () => {
                 const response = await updateMeetup(Number(id), updatedData);
                 if (response.statusCode !== 200) {
-                    throw new Error('Failed to update meetup');
+                    messageApi.error('Failed to update meetup');
+                    // throw new Error('Failed to update meetup');
                 }
+                messageApi.success('Meetup updated successfully! Redirecting...');
                 return response;
             },
             {
@@ -90,7 +92,11 @@ export default function EditMeetupPage() {
             async () => {
                 const response = await updateMeetupMedia(Number(id), imageFile);
                 if (response.statusCode !== 200) {
+                    messageApi.error('Failed to update image');
                     throw new Error('Failed to update image');
+                }
+                if (response.statusCode === 200) {
+                    messageApi.success('Image updated successfully!');
                 }
                 return response;
             },
