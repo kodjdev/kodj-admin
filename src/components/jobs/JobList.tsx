@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useJobService } from '@/services/api/jobService';
 import { JobPost } from '@/types/job';
 import { Table, Thead, Tbody, Tr, Th, Td, ActionButtons } from '@/components/common/Table';
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
+
+type JobListProps = {
+    jobs: JobPost[];
+    loading: boolean;
+    onDelete: (id: number) => Promise<void>;
+    onRefresh: () => Promise<void>;
+};
 
 const Container = styled.div`
     display: flex;
@@ -80,34 +86,17 @@ const StatusBadge = styled.span<{ status: string }>`
         props.status === 'OPEN' ? themeColors.colors.success.dark : themeColors.colors.neutral.gray700};
 `;
 
-export default function JobList() {
+const LoadingOverlay = styled.div`
+    padding: ${themeColors.spacing.xl};
+    text-align: center;
+    color: ${themeColors.colors.neutral.gray400};
+`;
+// components/jobs/JobList.tsx
+export default function JobList({ jobs, loading, onDelete, onRefresh }: JobListProps) {
     const router = useRouter();
-    const { getJobPosts, deleteJobPost, loading } = useJobService();
-    const [jobs, setJobs] = useState<JobPost[]>([]);
 
-    useEffect(() => {
-        fetchJobs();
-    }, []);
-
-    const fetchJobs = async () => {
-        try {
-            const response = await getJobPosts();
-            setJobs(response.data);
-        } catch (err) {
-            console.error('Failed to fetch jobs:', err);
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (window.confirm('Are you sure you want to delete this job post?')) {
-            try {
-                await deleteJobPost(id);
-                await fetchJobs();
-            } catch (err) {
-                console.error('Failed to delete job:', err);
-            }
-        }
-    };
+    // Add safety check to ensure jobs is always an array
+    const safeJobs = Array.isArray(jobs) ? jobs : [];
 
     const handleEdit = (id: number) => {
         router.push(`/jobs/${id}`);
@@ -117,11 +106,36 @@ export default function JobList() {
         router.push('/jobs/new');
     };
 
+    const handleDeleteClick = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this job post?')) {
+            await onDelete(id);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Container>
+                <HeaderContainer>
+                    <PageTitle>Jobs Management</PageTitle>
+                    <Button onClick={handleCreate}>Create a post</Button>
+                </HeaderContainer>
+                <TableCard>
+                    <LoadingOverlay>Loading jobs...</LoadingOverlay>
+                </TableCard>
+            </Container>
+        );
+    }
+
     return (
         <Container>
             <HeaderContainer>
                 <PageTitle>Jobs Management</PageTitle>
-                <Button onClick={handleCreate}>Create a post</Button>
+                <div style={{ display: 'flex', gap: themeColors.spacing.md }}>
+                    <Button variant="secondary" onClick={onRefresh}>
+                        Refresh
+                    </Button>
+                    <Button onClick={handleCreate}>Create a post</Button>
+                </div>
             </HeaderContainer>
             <TableCard>
                 <Table>
@@ -137,30 +151,38 @@ export default function JobList() {
                         </Tr>
                     </Thead>
                     <Tbody>
-                        {jobs.map((job) => (
-                            <Tr key={job.id}>
-                                <Td>{job.title}</Td>
-                                <Td>{job.companyName}</Td>
-                                <Td>
-                                    <JobTypeBadge type={job.jobType}>{job.jobType.replace('_', ' ')}</JobTypeBadge>
-                                </Td>
-                                <Td>
-                                    <StatusBadge status={job.jobOfferStatus}>{job.jobOfferStatus}</StatusBadge>
-                                </Td>
-                                <Td>{job.remote ? 'Yes' : 'No'}</Td>
-                                <Td>{new Date(job.createdAt).toLocaleDateString()}</Td>
-                                <Td>
-                                    <ActionButtons>
-                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(job.id)}>
-                                            Edit
-                                        </Button>
-                                        <Button size="sm" variant="error" onClick={() => handleDelete(job.id)}>
-                                            Delete
-                                        </Button>
-                                    </ActionButtons>
+                        {safeJobs.length === 0 ? (
+                            <Tr>
+                                <Td colSpan={7} style={{ textAlign: 'center', padding: themeColors.spacing.xl }}>
+                                    No jobs found. Create your first job post!
                                 </Td>
                             </Tr>
-                        ))}
+                        ) : (
+                            safeJobs.map((job) => (
+                                <Tr key={job.id}>
+                                    <Td>{job.title}</Td>
+                                    <Td>{job.companyName}</Td>
+                                    <Td>
+                                        <JobTypeBadge type={job.jobType}>{job.jobType.replace('_', ' ')}</JobTypeBadge>
+                                    </Td>
+                                    <Td>
+                                        <StatusBadge status={job.jobOfferStatus}>{job.jobOfferStatus}</StatusBadge>
+                                    </Td>
+                                    <Td>{job.remote ? 'Yes' : 'No'}</Td>
+                                    <Td>{new Date(job.createdAt).toLocaleDateString()}</Td>
+                                    <Td>
+                                        <ActionButtons>
+                                            <Button size="sm" variant="secondary" onClick={() => handleEdit(job.id)}>
+                                                Edit
+                                            </Button>
+                                            <Button size="sm" variant="error" onClick={() => handleDeleteClick(job.id)}>
+                                                Delete
+                                            </Button>
+                                        </ActionButtons>
+                                    </Td>
+                                </Tr>
+                            ))
+                        )}
                     </Tbody>
                 </Table>
             </TableCard>

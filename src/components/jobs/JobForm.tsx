@@ -1,9 +1,5 @@
-'use client';
-
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useJobService } from '@/services/api/jobService';
-import { JobFormData } from '@/types/job';
+import React, { useState, useEffect } from 'react';
+import { JobFormData, JobPost } from '@/types/job';
 import {
     Form,
     FormGroup,
@@ -20,6 +16,14 @@ import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 
+type JobFormProps = {
+    initialData?: JobPost | null;
+    onSubmit: (formData: JobFormData) => Promise<void>;
+    onCancel: () => void;
+    loading: boolean;
+    mode: 'create' | 'edit';
+};
+
 const FormActions = styled.div`
     display: flex;
     justify-content: flex-end;
@@ -31,10 +35,7 @@ const HiddenFileInput = styled.input`
     display: none;
 `;
 
-export default function JobForm() {
-    const router = useRouter();
-    const { createJobPost } = useJobService();
-
+export default function JobForm({ initialData, onSubmit, onCancel, loading, mode }: JobFormProps) {
     const [formData, setFormData] = useState<JobFormData>({
         title: '',
         companyName: '',
@@ -42,7 +43,31 @@ export default function JobForm() {
         jobType: 'FULL_TIME',
         jobOfferStatus: 'OPEN',
         remote: false,
+        category: '',
     });
+
+    useEffect(() => {
+        if (mode === 'edit' && initialData) {
+            setFormData({
+                title: initialData.title || '',
+                companyName: initialData.companyName || '',
+                requiredExperience: initialData.requiredExperience || '',
+                jobType: initialData.jobType || 'FULL_TIME',
+                jobOfferStatus: initialData.jobOfferStatus || 'OPEN',
+                remote: initialData.remote || false,
+                technologies: initialData.technologies || '',
+                content: initialData.content || '',
+                placeOfWork: initialData.placeOfWork || '',
+                salaryRange: initialData.salaryRange || '',
+                contactPhone: initialData.contactPhone || '',
+                contactEmail: initialData.contactEmail || '',
+                linkedinProfile: initialData.linkedinProfile || '',
+                twitterProfile: initialData.twitterProfile || '',
+                facebookProfile: initialData.facebookProfile || '',
+                instagramProfile: initialData.instagramProfile || '',
+            });
+        }
+    }, [initialData, mode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -64,18 +89,13 @@ export default function JobForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            await createJobPost(formData);
-            router.push('/jobs');
-        } catch (err) {
-            console.error('Failed to submit job post:', err);
-        }
+        await onSubmit(formData);
     };
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Create New Job</CardTitle>
+                <CardTitle>{mode === 'create' ? 'Create New Job' : 'Edit Job'}</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form onSubmit={handleSubmit}>
@@ -87,12 +107,30 @@ export default function JobForm() {
                             onChange={handleChange}
                             placeholder="Job Title"
                             required
+                            disabled={loading}
+                        />
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Label>Category</Label>
+                        <Input
+                            name="category"
+                            value={formData.category || ''}
+                            onChange={handleChange}
+                            placeholder="Job Category"
+                            disabled={loading}
                         />
                     </FormGroup>
 
                     <FormGroup>
                         <Label>Company Name</Label>
-                        <Input name="companyName" value={formData.companyName} onChange={handleChange} required />
+                        <Input
+                            name="companyName"
+                            value={formData.companyName}
+                            onChange={handleChange}
+                            required
+                            disabled={loading}
+                        />
                     </FormGroup>
 
                     <FormRow>
@@ -102,12 +140,13 @@ export default function JobForm() {
                                 name="requiredExperience"
                                 value={formData.requiredExperience}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
 
                         <FormGroup>
                             <Label>Job Type</Label>
-                            <Select name="jobType" value={formData.jobType} onChange={handleChange}>
+                            <Select name="jobType" value={formData.jobType} onChange={handleChange} disabled={loading}>
                                 <option value="FULL_TIME">Full Time</option>
                                 <option value="PART_TIME">Part Time</option>
                                 <option value="CONTRACT">Contract</option>
@@ -117,7 +156,12 @@ export default function JobForm() {
 
                         <FormGroup>
                             <Label>Status</Label>
-                            <Select name="jobOfferStatus" value={formData.jobOfferStatus} onChange={handleChange}>
+                            <Select
+                                name="jobOfferStatus"
+                                value={formData.jobOfferStatus}
+                                onChange={handleChange}
+                                disabled={loading}
+                            >
                                 <option value="OPEN">Open</option>
                                 <option value="CLOSED">Closed</option>
                             </Select>
@@ -126,33 +170,63 @@ export default function JobForm() {
 
                     <FormGroup>
                         <Label>Technologies</Label>
-                        <Input name="technologies" value={formData.technologies || ''} onChange={handleChange} />
+                        <Input
+                            name="technologies"
+                            value={formData.technologies || ''}
+                            onChange={handleChange}
+                            disabled={loading}
+                        />
                     </FormGroup>
 
                     <FormGroup>
                         <Label>Job Description</Label>
-                        <Textarea name="content" value={formData.content || ''} onChange={handleChange} />
+                        <Textarea
+                            name="content"
+                            value={formData.content || ''}
+                            onChange={handleChange}
+                            disabled={loading}
+                        />
                     </FormGroup>
 
                     <FormRow>
                         <FormGroup>
                             <Label>Remote</Label>
-                            <Checkbox name="remote" checked={formData.remote} onChange={handleChange} />
+                            <Checkbox
+                                name="remote"
+                                checked={formData.remote}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
                         </FormGroup>
                         <FormGroup>
                             <Label>Place of Work</Label>
-                            <Input name="placeOfWork" value={formData.placeOfWork || ''} onChange={handleChange} />
+                            <Input
+                                name="placeOfWork"
+                                value={formData.placeOfWork || ''}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
                         </FormGroup>
                         <FormGroup>
                             <Label>Salary Range</Label>
-                            <Input name="salaryRange" value={formData.salaryRange || ''} onChange={handleChange} />
+                            <Input
+                                name="salaryRange"
+                                value={formData.salaryRange || ''}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
                         </FormGroup>
                     </FormRow>
 
                     <FormRow>
                         <FormGroup>
                             <Label>Contact Phone</Label>
-                            <Input name="contactPhone" value={formData.contactPhone || ''} onChange={handleChange} />
+                            <Input
+                                name="contactPhone"
+                                value={formData.contactPhone || ''}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
                         </FormGroup>
                         <FormGroup>
                             <Label>Contact Email</Label>
@@ -161,6 +235,7 @@ export default function JobForm() {
                                 type="email"
                                 value={formData.contactEmail || ''}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
                     </FormRow>
@@ -172,6 +247,7 @@ export default function JobForm() {
                                 name="linkedinProfile"
                                 value={formData.linkedinProfile || ''}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
                         <FormGroup>
@@ -180,6 +256,7 @@ export default function JobForm() {
                                 name="twitterProfile"
                                 value={formData.twitterProfile || ''}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
                         <FormGroup>
@@ -188,6 +265,7 @@ export default function JobForm() {
                                 name="facebookProfile"
                                 value={formData.facebookProfile || ''}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
                         <FormGroup>
@@ -196,6 +274,7 @@ export default function JobForm() {
                                 name="instagramProfile"
                                 value={formData.instagramProfile || ''}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </FormGroup>
                     </FormRow>
@@ -203,13 +282,21 @@ export default function JobForm() {
                     <FormGroup>
                         <Label>Thumbnail</Label>
                         <FileInputLabel htmlFor="image-upload">Upload Image</FileInputLabel>
-                        <HiddenFileInput id="image-upload" type="file" accept="image/*" onChange={handleFileChange} />
+                        <HiddenFileInput
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            disabled={loading}
+                        />
                         {formData.image && <span>{formData.image.name}</span>}
                     </FormGroup>
 
                     <FormActions>
-                        <Button type="submit">Submit</Button>
-                        <Button type="button" variant="secondary" onClick={() => router.back()}>
+                        <Button type="submit" disabled={loading}>
+                            {mode === 'create' ? 'Create Job' : 'Update Job'}
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
                             Cancel
                         </Button>
                     </FormActions>

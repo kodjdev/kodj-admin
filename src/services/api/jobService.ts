@@ -1,5 +1,5 @@
 import { ApiResponse, PaginationParams } from '@/types/common';
-import { JobPost, JobFormData } from '@/types/job';
+import { JobPost, JobFormData, JobApiResponse, JobsApiResponse } from '@/types/job';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 
@@ -8,22 +8,22 @@ export const useJobService = () => {
 
     return useMemo(
         () => ({
-            getJobPosts: async (params?: PaginationParams): Promise<ApiResponse<JobPost[]>> => {
-                return fetchData<JobPost[]>({
+            getJobPosts: async (params?: PaginationParams): Promise<ApiResponse<JobsApiResponse>> => {
+                return fetchData({
                     endpoint: '/public/job-posts',
                     method: 'GET',
                     params,
                 });
             },
 
-            getJobPostById: async (id: number): Promise<ApiResponse<JobPost>> => {
-                return fetchData<JobPost>({
+            getJobPostById: async (id: number): Promise<JobApiResponse> => {
+                return fetchData({
                     endpoint: `/public/job-posts/${id}`,
                     method: 'GET',
                 });
             },
 
-            createJobPost: async (jobData: JobFormData): Promise<ApiResponse<JobPost>> => {
+            createJobPost: async (jobData: JobFormData): Promise<JobApiResponse> => {
                 const formData = new FormData();
 
                 Object.entries(jobData).forEach(([key, value]) => {
@@ -36,7 +36,7 @@ export const useJobService = () => {
                     }
                 });
 
-                return fetchData<JobPost>({
+                return fetchData({
                     endpoint: '/admin/job-posts',
                     method: 'POST',
                     data: formData,
@@ -46,11 +46,26 @@ export const useJobService = () => {
                 });
             },
 
-            updateJobPost: async (id: number, jobData: Partial<JobFormData>): Promise<ApiResponse<JobPost>> => {
-                return fetchData<JobPost>({
+            updateJobPost: async (id: number, jobData: JobFormData): Promise<JobApiResponse> => {
+                const formData = new FormData();
+
+                Object.entries(jobData).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        if (key === 'image' && value instanceof File) {
+                            formData.append(key, value);
+                        } else {
+                            formData.append(key, String(value));
+                        }
+                    }
+                });
+
+                return fetchData({
                     endpoint: `/admin/job-posts/${id}`,
                     method: 'PUT',
-                    data: jobData,
+                    data: formData,
+                    customHeaders: {
+                        'Content-Type': 'multipart/form-data',
+                    },
                 });
             },
 

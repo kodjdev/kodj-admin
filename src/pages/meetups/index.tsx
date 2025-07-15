@@ -1,15 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import MeetupList from '@/components/meetups/MeetupList';
-import { useMeetupService } from '@/services/api/meetupService';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { Meetup } from '@/types/meetup';
+import { useMeetupService } from '@/services/api/meetupService';
+import MeetupList from '@/components/meetups/MeetupList';
 
 export default function MeetupsPage() {
     const router = useRouter();
     const { getMeetups, deleteMeetup } = useMeetupService();
-    const [meetups, setMeetups] = useState<Meetup[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const [upcomingMeetups, setUpcomingMeetups] = useState<Meetup[]>([]);
+    const [pastMeetups, setPastMeetups] = useState<Meetup[]>([]);
+
+    const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+    const [loadingPast, setLoadingPast] = useState(true);
+    const [errorUpcoming, setErrorUpcoming] = useState<string | null>(null);
+    const [errorPast, setErrorPast] = useState<string | null>(null);
+
     const hasFetched = useRef(false);
 
     useEffect(() => {
@@ -19,22 +25,52 @@ export default function MeetupsPage() {
     const fetchMeetups = async () => {
         if (hasFetched.current) return;
         hasFetched.current = true;
+
+        setLoadingUpcoming(true);
+        setLoadingPast(true);
+        setErrorUpcoming(null);
+        setErrorPast(null);
+
+        const upcomingPromise = getMeetups({ type: 'upcoming', page: 0, size: 50 });
+        const pastPromise = getMeetups({ type: 'past', page: 0, size: 50 });
+
         try {
-            setLoading(true);
-            const response = await getMeetups();
-            setMeetups(response.data.data.content || []);
+            const [upcomingResult, pastResult] = await Promise.allSettled([upcomingPromise, pastPromise]);
+
+            if (upcomingResult.status === 'fulfilled') {
+                if (upcomingResult.value.statusCode === 200) {
+                    setUpcomingMeetups(upcomingResult.value.data?.data.content || []);
+                } else {
+                    setErrorUpcoming(upcomingResult.value.message || 'Unknown error');
+                }
+            } else {
+                setErrorUpcoming(upcomingResult.reason?.message || 'Unknown error');
+            }
+            setLoadingUpcoming(false);
+
+            if (pastResult.status === 'fulfilled') {
+                if (pastResult.value.statusCode === 200) {
+                    setPastMeetups(pastResult.value.data?.data.content || []);
+                } else {
+                    setErrorPast(pastResult.value.message || 'Unknown error');
+                }
+            } else {
+                setErrorPast(pastResult.reason?.message || 'Unknown error');
+            }
+            setLoadingPast(false);
         } catch (err) {
-            setError('Failed to fetch meetups');
-            console.error('Failed to fetch meetups:', err);
-        } finally {
-            setLoading(false);
+            setErrorUpcoming('A critical error occurred.');
+            setErrorPast('A critical error occurred.');
+            setLoadingUpcoming(false);
+            setLoadingPast(false);
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: number, type: 'upcoming' | 'past') => {
         if (window.confirm('Are you sure you want to delete this meetup?')) {
             try {
                 await deleteMeetup(id);
+                hasFetched.current = false;
                 await fetchMeetups();
             } catch (err) {
                 console.error('Failed to delete meetup:', err);
@@ -52,10 +88,13 @@ export default function MeetupsPage() {
 
     return (
         <MeetupList
-            meetups={meetups}
-            loading={loading}
-            error={error}
-            onDelete={handleDelete}
+            upcomingMeetups={upcomingMeetups}
+            pastMeetups={pastMeetups}
+            loadingUpcoming={loadingUpcoming}
+            loadingPast={loadingPast}
+            errorUpcoming={errorUpcoming}
+            errorPast={errorPast}
+            onDelete={handleDelete} // Pass the handler from MeetupsPage
             onEdit={handleEdit}
             onCreate={handleCreate}
         />
