@@ -40,14 +40,13 @@ const PageTitle = styled.h1`
 `;
 
 const SectionTitle = styled.h2`
-    margin-top: ${themeColors.spacing.xl};
-    margin-bottom: ${themeColors.spacing.md};
     font-size: ${themeColors.typography.headings.desktop.h4.fontSize}px;
     color: ${themeColors.colors.neutral.white};
 `;
 
 const TableCard = styled.div`
-    border: 1px solid ${themeColors.colors.neutral.gray700};
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
     border-radius: ${themeColors.cardBorder.lg};
     overflow: hidden;
     margin-bottom: ${themeColors.spacing.xl};
@@ -111,7 +110,7 @@ const MeetupTableSection: React.FC<{
     onDelete: (id: number) => Promise<void>;
     onEdit: (id: number) => void;
     meetupType: 'upcoming' | 'past';
-}> = ({ title, meetups, loading, error, onDelete, onEdit, meetupType }) => (
+}> = ({ title, meetups, loading, error, onDelete, onEdit }) => (
     <>
         <SectionTitle>{title}</SectionTitle>
         <TableCard>

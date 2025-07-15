@@ -1,4 +1,4 @@
-import { ApiResponse, User, UserDetails } from '@/types/common';
+import { ApiResponse, UserDetails } from '@/types/common';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 

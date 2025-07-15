@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useNewsService } from '@/services/api/newsService';
 import NewsList from '@/components/news/NewsList';
-import { News, PaginatedResponse } from '@/types/news';
+import { News } from '@/types/news';
 import { message } from 'antd';
 
 export default function NewsPage() {

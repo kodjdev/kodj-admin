@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import * as d3 from 'd3';
 import { themeColors } from '@/themes/themeColors';
@@ -70,34 +70,34 @@ const Tooltip = styled.div`
     white-space: nowrap;
 `;
 
+const chartTheme = {
+    colors: {
+        users: themeColors.colors.success.main,
+        events: themeColors.colors.primary.main,
+        speakers: themeColors.colors.secondary.main,
+    },
+    gradients: {
+        users: {
+            start: { color: themeColors.colors.success.main, opacity: 0.3 },
+            end: { color: themeColors.colors.success.main, opacity: 0.05 },
+        },
+        events: {
+            start: { color: themeColors.colors.primary.main, opacity: 0.3 },
+            end: { color: themeColors.colors.primary.main, opacity: 0.05 },
+        },
+        totalSpeakers: {
+            start: { color: themeColors.colors.secondary.main, opacity: 0.3 },
+            end: { color: themeColors.colors.secondary.main, opacity: 0.05 },
+        },
+    },
+};
+
 export default function PlatformActivityChart({ activeTab, stats }: { activeTab: ActiveTabs; stats: StatisticsData }) {
     const svgRef = useRef<SVGSVGElement>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 300 });
 
-    const chartTheme = {
-        colors: {
-            users: themeColors.colors.success.main,
-            events: themeColors.colors.primary.main,
-            speakers: themeColors.colors.secondary.main,
-        },
-        gradients: {
-            users: {
-                start: { color: themeColors.colors.success.main, opacity: 0.3 },
-                end: { color: themeColors.colors.success.main, opacity: 0.05 },
-            },
-            events: {
-                start: { color: themeColors.colors.primary.main, opacity: 0.3 },
-                end: { color: themeColors.colors.primary.main, opacity: 0.05 },
-            },
-            totalSpeakers: {
-                start: { color: themeColors.colors.secondary.main, opacity: 0.3 },
-                end: { color: themeColors.colors.secondary.main, opacity: 0.05 },
-            },
-        },
-    };
-
-    const generateChartData = () => {
+    const generateChartData = useCallback(() => {
         const { totalUsers, totalEvents, totalSpeakers } = stats;
 
         const safeUsers = totalUsers || 0;
@@ -143,7 +143,7 @@ export default function PlatformActivityChart({ activeTab, stats }: { activeTab:
         }
 
         return dataPoints;
-    };
+    }, [stats, activeTab]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -168,6 +168,7 @@ export default function PlatformActivityChart({ activeTab, stats }: { activeTab:
         svg.selectAll('*').remove();
 
         const data = generateChartData();
+
         const margin = { top: 20, right: 15, bottom: 25, left: 20 };
         const width = dimensions.width - margin.left - margin.right;
         const height = dimensions.height - margin.top - margin.bottom;
@@ -423,7 +424,7 @@ export default function PlatformActivityChart({ activeTab, stats }: { activeTab:
                     tooltipRef.current.style.opacity = '1';
                 }
             });
-    }, [activeTab, stats, dimensions]);
+    }, [activeTab, stats, dimensions, generateChartData, chartTheme]);
 
     return (
         <ChartContainer>

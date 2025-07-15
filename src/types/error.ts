@@ -2,11 +2,12 @@ export type ApiErrorResponse = {
     data?: ApiErrorData;
     message?: string;
     statusCode?: number;
+    error?: boolean;
 };
 
 type ApiErrorData = {
     message?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
 export type ApiError = {
@@ -24,6 +25,9 @@ export function isApiError(error: unknown): error is ApiError {
         typeof error === 'object' &&
         error !== null &&
         ('response' in error || 'message' in error) &&
-        (typeof (error as any).response === 'object' || typeof (error as any).message === 'string')
+        (((error as Partial<ApiError>).response !== undefined &&
+            typeof (error as Partial<ApiError>).response === 'object') ||
+            ((error as Partial<ApiError>).message !== undefined &&
+                typeof (error as Partial<ApiError>).message === 'string'))
     );
 }

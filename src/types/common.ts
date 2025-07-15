@@ -2,6 +2,7 @@ export type ApiResponse<T> = {
     message: string;
     data: T;
     statusCode: number;
+    error?: boolean;
 };
 
 export type User = {

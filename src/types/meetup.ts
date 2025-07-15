@@ -14,6 +14,8 @@ type BaseMeetup = {
 
 export type Meetup = BaseMeetup & {
     image?: string;
+    imageName?: string;
+    imageURL?: string;
 };
 
 export type MeetupResponse = BaseMeetup & {

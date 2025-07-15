@@ -168,11 +168,8 @@ export default function ClientLayout({ children }: LayoutProps) {
         { href: '/news', label: 'News', icon: '📰' },
         { href: '/meetups', label: 'Meetups', icon: '📅' },
         { href: '/jobs', label: 'Job Posts', icon: '💼' },
-    ];
-
-    const documentItems = [
-        { href: '/data-library', label: 'Data Library', icon: '📚' },
-        { href: '/reports', label: 'Reports', icon: '📊' },
+        { href: '/statistics', label: 'Data Statistics', icon: '📈' },
+        { href: '/report', label: 'Report', icon: '📊' },
     ];
 
     return (
@@ -186,12 +183,6 @@ export default function ClientLayout({ children }: LayoutProps) {
                     <NavGroup>
                         <NavGroupTitle>Home</NavGroupTitle>
                         {mainNavItems.map((item) => (
-                            <StyledNavLink key={item.href} href={item.href} $active={pathname === item.href}>
-                                <NavIcon>{item.icon}</NavIcon>
-                                {item.label}
-                            </StyledNavLink>
-                        ))}
-                        {documentItems.map((item) => (
                             <StyledNavLink key={item.href} href={item.href} $active={pathname === item.href}>
                                 <NavIcon>{item.icon}</NavIcon>
                                 {item.label}

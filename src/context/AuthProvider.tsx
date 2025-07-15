@@ -44,37 +44,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login');
     }, [router]);
 
-    const loadUserFromToken = async (token: string): Promise<User | null> => {
-        try {
-            const userResponse = await authService.getUserDetails(token);
-            console.log('User details response:', userResponse);
+    const loadUserFromToken = useCallback(
+        async (token: string): Promise<User | null> => {
+            try {
+                const userResponse = await authService.getUserDetails(token);
+                console.log('User details response:', userResponse);
 
-            if (userResponse.data) {
-                const userData = userResponse.data.data;
+                if (userResponse.data) {
+                    const userData = userResponse.data.data;
 
-                if (userData.oauthProvider !== 'LOCAL') {
-                    throw new Error('Access denied. Admin privileges required.');
+                    if (userData.oauthProvider !== 'LOCAL') {
+                        throw new Error('Access denied. Admin privileges required.');
+                    }
+
+                    const userInfo: User = {
+                        id: userData.id,
+                        email: userData.email,
+                        name: userData.name || `${userData.firstName} ${userData.lastName}`.trim() || userData.email,
+                        username: userData.username || userData.email,
+                        role: userData.role,
+                        createdAt: userData.createdAt,
+                    };
+
+                    return userInfo;
                 }
-
-                const userInfo: User = {
-                    id: userData.id,
-                    email: userData.email,
-                    name: userData.name || `${userData.firstName} ${userData.lastName}`.trim() || userData.email,
-                    username: userData.username || userData.email,
-                    role: userData.role,
-                    createdAt: userData.createdAt,
-                };
-
-                return userInfo;
+                return null;
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                throw error;
             }
-            return null;
-        } catch (error) {
-            console.error('Error loading user data:', error);
-            throw error;
-        }
-    };
-
-    const handleAuthError = (err: unknown): string => {
+        },
+        [authService],
+    );
+    const handleAuthError = useCallback((err: unknown): string => {
         if (isApiError(err)) {
             const status = err.response?.statusCode || 500;
             const message = err.response?.data?.message || err.message || 'An error occurred';
@@ -99,91 +101,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
             return 'An unexpected error occurred';
         }
-    };
+    }, []);
 
-    const sendOtp = async (email: string, password: string): Promise<boolean> => {
-        try {
-            setError(null);
-            setTempEmail(email);
+    const sendOtp = useCallback(
+        async (email: string, password: string): Promise<boolean> => {
+            try {
+                setError(null);
+                setTempEmail(email);
 
-            const response = await authService.login({
-                email,
-                password,
-                ipAddress: window.location.hostname,
-                deviceType: 'web',
-            });
-
-            if (response.statusCode >= 400) {
-                const errorMessage = handleAuthError({
-                    response: {
-                        status: response.statusCode,
-                        data: response.data,
-                    },
+                const response = await authService.login({
+                    email,
+                    password,
+                    ipAddress: window.location.hostname,
+                    deviceType: 'web',
                 });
+
+                if (response.statusCode >= 400) {
+                    const errorMessage = handleAuthError({
+                        response: {
+                            status: response.statusCode,
+                            data: response.data,
+                        },
+                    });
+                    setError(errorMessage);
+                    return false;
+                }
+
+                setOtpSent(true);
+                return true;
+            } catch (err: unknown) {
+                console.error('Login error:', err);
+                const errorMessage = handleAuthError(err);
                 setError(errorMessage);
                 return false;
             }
+        },
+        [authService, handleAuthError],
+    );
 
-            setOtpSent(true);
-            return true;
-        } catch (err: unknown) {
-            console.error('Login error:', err);
-            const errorMessage = handleAuthError(err);
-            setError(errorMessage);
-            return false;
-        }
-    };
-
-    const verifyOtp = async (email: string, otp: string) => {
-        try {
-            setError(null);
-            const response = await authService.verifyLoginOtp(email, otp);
-            console.log('OTP verification response:', response);
-
-            if (response.data.data.access_token && response.data.data.refresh_token) {
-                const { access_token, refresh_token } = response.data.data;
-
-                console.log('Response tokens:', { access_token, refresh_token });
-
-                localStorage.setItem('access_token', access_token);
-                localStorage.setItem('refresh_token', refresh_token);
-
-                try {
-                    const userInfo = await loadUserFromToken(access_token);
-                    if (userInfo) {
-                        setUser(userInfo);
-                        setIsAuthenticated(true);
-                        setOtpSent(false);
-                        router.push('/');
-                    } else {
-                        throw new Error('User information could not be loaded');
-                    }
-                } catch (error) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    setError('Failed to load user information');
-                    throw error;
+    const verifyOtp = useCallback(
+        async (otp: string) => {
+            try {
+                setError(null);
+                if (!tempEmail) {
+                    setError('Email not found for OTP verification. Please try logging in again.');
+                    return false;
                 }
-                return true;
+                const response = await authService.verifyLoginOtp(tempEmail, otp);
+                if (response.data.data.access_token && response.data.data.refresh_token) {
+                    const { access_token, refresh_token } = response.data.data;
+
+                    console.log('Response tokens:', { access_token, refresh_token });
+
+                    localStorage.setItem('access_token', access_token);
+                    localStorage.setItem('refresh_token', refresh_token);
+
+                    try {
+                        const userInfo = await loadUserFromToken(access_token);
+                        if (userInfo) {
+                            setUser(userInfo);
+                            setIsAuthenticated(true);
+                            setOtpSent(false);
+                            router.push('/');
+                        } else {
+                            throw new Error('User information could not be loaded');
+                        }
+                    } catch (error) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        setError('Failed to load user information');
+                        throw error;
+                    }
+                    return true;
+                }
+
+                setError('Invalid response from server');
+                return false;
+            } catch (err: unknown) {
+                console.error('OTP verification error:', err);
+                const errorMessage = handleAuthError(err);
+                setError(errorMessage);
+                return false;
             }
+        },
+        [authService, handleAuthError, loadUserFromToken, router, tempEmail],
+    );
 
-            setError('Invalid response from server');
-            return false;
-        } catch (err: unknown) {
-            console.error('OTP verification error:', err);
-            const errorMessage = handleAuthError(err);
-            setError(errorMessage);
-            return false;
-        }
-    };
-
-    const login = (accessToken: string, refreshToken: string, user: User) => {
+    const login = useCallback((accessToken: string, refreshToken: string, user: User) => {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
         setUser(user);
         setIsAuthenticated(true);
         setError(null);
-    };
+    }, []);
 
     const validateAuth = useCallback(async () => {
         const accessToken = localStorage.getItem('access_token');
@@ -229,11 +239,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsLoading(false);
         }
-    }, [logout, authService]);
+    }, [logout, authService, loadUserFromToken]);
 
     useEffect(() => {
         validateAuth();
-    }, []);
+    }, [validateAuth]);
 
     useEffect(() => {
         if (!isLoading) {
@@ -277,9 +287,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => clearInterval(interval);
     }, [isAuthenticated, authService, logout]);
 
-    const resendOtp = async (email: string, password: string): Promise<boolean> => {
-        return await sendOtp(email, password);
-    };
+    const resendOtp = useCallback(async (): Promise<boolean> => {
+        if (!tempEmail) {
+            setError('No email found to resend OTP.');
+            return false;
+        }
+        return await sendOtp(tempEmail, '');
+    }, [sendOtp, tempEmail]);
 
     const resetOtp = useCallback(() => {
         setOtpSent(false);

@@ -63,6 +63,7 @@ export default function MeetupsPage() {
             setErrorPast('A critical error occurred.');
             setLoadingUpcoming(false);
             setLoadingPast(false);
+            console.error('Failed to fetch meetups:', err);
         }
     };
 
@@ -72,6 +73,7 @@ export default function MeetupsPage() {
                 await deleteMeetup(id);
                 hasFetched.current = false;
                 await fetchMeetups();
+                console.log(`${type} meetup with  ${id} deleted successfully.`);
             } catch (err) {
                 console.error('Failed to delete meetup:', err);
             }
@@ -94,7 +96,7 @@ export default function MeetupsPage() {
             loadingPast={loadingPast}
             errorUpcoming={errorUpcoming}
             errorPast={errorPast}
-            onDelete={handleDelete} // Pass the handler from MeetupsPage
+            onDelete={handleDelete}
             onEdit={handleEdit}
             onCreate={handleCreate}
         />

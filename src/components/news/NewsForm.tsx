@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useNewsService } from '@/services/api/newsService';
 import { NewsFormData } from '@/types/news';
 import { Form, FormGroup, FormRow, Label, Input, Textarea, Select, FileInputLabel } from '@/components/common/Form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';

@@ -1,25 +1,69 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Meetup, MeetupFormData } from '@/types/meetup';
-import { Form, FormGroup, FormRow, Label, Input, Textarea, Checkbox, FileInputLabel } from '@/components/common/Form';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import styled from 'styled-components';
+import { Button } from '@/components/common/Button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
+import { Input, Textarea, Checkbox, Label, FileInputLabel, Form } from '@/components/common/Form';
 import { themeColors } from '@/themes/themeColors';
+import { Meetup } from '@/types/meetup';
 
-type MeetupFormProps = {
-    meetupId?: string;
-    onSubmit?: (formData: Meetup, imageFile?: File | null) => Promise<void>;
-    initialData?: MeetupFormData;
+type ImageFileState = {
+    name: string;
+    preview?: string;
+    file?: File;
+};
+
+type InternalMeetupFormData = Omit<Meetup, 'id' | 'availableSeats' | 'startTime' | 'endTime'> & {
+    startTime: string;
+    endTime: string;
+};
+
+export type MeetupFormProps = {
+    meetupId?: number;
+    initialData?: Meetup;
+    onSubmit: (formData: Omit<Meetup, 'id' | 'availableSeats'>, imageFile: File | null) => Promise<void>;
     onImageUpdate?: (imageFile: File) => Promise<void>;
 };
 
+const FormGroup = styled.div`
+    margin-bottom: ${themeColors.spacing.md};
+    display: flex;
+    flex-direction: column;
+    gap: ${themeColors.spacing.xs};
+`;
+
+const FormRow = styled.div`
+    display: flex;
+    gap: ${themeColors.spacing.lg};
+    margin-bottom: ${themeColors.spacing.md};
+    align-items: flex-start;
+
+    > ${FormGroup} {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    &.two-column > ${FormGroup} {
+        flex-basis: calc(50% - (${themeColors.spacing.lg} / 2));
+    }
+
+    &.three-column > ${FormGroup} {
+        flex-basis: calc(33.333% - (2 * ${themeColors.spacing.lg} / 3));
+    }
+`;
+
+const CheckboxWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${themeColors.spacing.sm};
+`;
+
 const FormActions = styled.div`
     display: flex;
-    gap: ${themeColors.spacing.md};
     justify-content: flex-end;
+    gap: ${themeColors.spacing.md};
     margin-top: ${themeColors.spacing.xl};
 `;
 
@@ -27,16 +71,26 @@ const HiddenFileInput = styled.input`
     display: none;
 `;
 
-const CheckboxWrapper = styled.div`
+const ImagePreviewContainer = styled.div`
+    margin-top: ${themeColors.spacing.md};
+    color: ${themeColors.dark.textSecondary};
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: ${themeColors.spacing.sm};
-    color: #b3b3b3;
+    align-items: flex-start;
+
+    img {
+        max-width: 200px;
+        height: auto;
+        border-radius: ${themeColors.cardBorder.md};
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
 `;
 
 export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpdate }: MeetupFormProps) {
     const router = useRouter();
-    const [formData, setFormData] = useState<Meetup>({
+
+    const [formData, setFormData] = useState<InternalMeetupFormData>({
         title: '',
         description: '',
         parking: false,
@@ -48,18 +102,45 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
         endTime: '',
         image: '',
     });
-    const [imageFile, setImageFile] = useState<{ name: string; preview?: string } | null>(null);
+    const [imageFile, setImageFile] = useState<ImageFileState | null>(null);
     const [isUpdatingImage, setIsUpdatingImage] = useState(false);
 
+    const formatToDateTimeLocal = (dateString: string, timeString: string): string => {
+        if (!dateString || !timeString) return '';
+        const [hours, minutes] = timeString.split(':');
+        return `${dateString}T${hours}:${minutes}`;
+    };
+
+    const extractDateFromDateTimeLocal = (dateTimeLocalString: string): string => {
+        if (!dateTimeLocalString) return '';
+        return dateTimeLocalString.split('T')[0] || '';
+    };
+
+    const extractTimeFromDateTimeLocal = (dateTimeLocalString: string): string => {
+        if (!dateTimeLocalString) return '';
+        const timePart = dateTimeLocalString.split('T')[1] || '';
+        return `${timePart}:00`;
+    };
+
     useEffect(() => {
-        if (!initialData || !initialData.title) return;
+        if (!initialData) {
+            setFormData({
+                title: '',
+                description: '',
+                parking: false,
+                location: '',
+                maxSeats: 1,
+                provided: '',
+                meetupDate: '',
+                startTime: '',
+                endTime: '',
+                image: '',
+            });
+            setImageFile(null);
+            return;
+        }
 
         console.log('InitialData in MeetupForm:', initialData);
-
-        const formatToDateTimeLocal = (value?: string) => {
-            if (!value || typeof value !== 'string') return '';
-            return value.replace(' ', 'T').slice(0, 16);
-        };
 
         setFormData({
             title: initialData.title || '',
@@ -69,8 +150,8 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
             maxSeats: initialData.maxSeats || 1,
             provided: initialData.provided || '',
             meetupDate: initialData.meetupDate || '',
-            startTime: formatToDateTimeLocal(initialData.startTime),
-            endTime: formatToDateTimeLocal(initialData.endTime),
+            startTime: formatToDateTimeLocal(initialData.meetupDate, initialData.startTime),
+            endTime: formatToDateTimeLocal(initialData.meetupDate, initialData.endTime),
             image: initialData.imageName || '',
         });
 
@@ -78,17 +159,31 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
             setImageFile({
                 name: initialData.imageName,
                 preview: initialData.imageURL,
-            } as any);
+            });
+        } else {
+            setImageFile(null);
         }
     }, [initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
+
         if (type === 'checkbox') {
             const target = e.target as HTMLInputElement;
             setFormData((prev) => ({
                 ...prev,
                 [name]: target.checked,
+            }));
+        } else if (name === 'meetupDate') {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        } else if (name === 'startTime' || name === 'endTime') {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+                meetupDate: name === 'startTime' ? extractDateFromDateTimeLocal(value) : prev.meetupDate,
             }));
         } else {
             setFormData((prev) => ({
@@ -99,17 +194,16 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
     };
 
     const handleImageUpdate = async () => {
-        if (!onImageUpdate || !imageFile || !(imageFile as any)?.file) {
-            console.error('No image file selected or onImageUpdate not provided');
+        if (!onImageUpdate || !imageFile || !(imageFile.file instanceof File)) {
             return;
         }
 
-        const file = (imageFile as any).file;
-        console.log('Updating image with file:', file);
+        const file = imageFile.file;
 
         setIsUpdatingImage(true);
         try {
             await onImageUpdate(file);
+            setImageFile((prev) => (prev ? { name: prev.name, preview: prev.preview } : null));
         } catch (error) {
             console.error('Failed to update image:', error);
         } finally {
@@ -120,19 +214,32 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            console.log('Selected file:', file);
             setImageFile({
                 name: file.name,
                 preview: URL.createObjectURL(file),
                 file,
-            } as any);
+            });
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (onSubmit) {
-            await onSubmit(formData, (imageFile as any)?.file ?? null);
+            const submittedFormData: Omit<Meetup, 'id' | 'availableSeats'> = {
+                title: formData.title,
+                description: formData.description,
+                parking: formData.parking,
+                location: formData.location,
+                maxSeats: formData.maxSeats,
+                provided: formData.provided,
+                meetupDate: extractDateFromDateTimeLocal(formData.startTime),
+                startTime: extractTimeFromDateTimeLocal(formData.startTime),
+                endTime: extractTimeFromDateTimeLocal(formData.endTime),
+                image: formData.image,
+            };
+
+            await onSubmit(submittedFormData, imageFile?.file ?? null);
         }
     };
 
@@ -172,7 +279,7 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                         />
                     </FormGroup>
 
-                    <FormRow>
+                    <FormRow className="two-column">
                         <FormGroup>
                             <Label htmlFor="location">Location *</Label>
                             <Input
@@ -199,7 +306,7 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                         </FormGroup>
                     </FormRow>
 
-                    <FormRow>
+                    <FormRow className="three-column">
                         <FormGroup>
                             <Label htmlFor="meetupDate">Meetup Date *</Label>
                             <Input
@@ -209,6 +316,7 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                                 value={formData.meetupDate}
                                 onChange={handleChange}
                                 required
+                                disabled
                             />
                         </FormGroup>
 
@@ -238,7 +346,7 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                     </FormRow>
 
                     <FormGroup>
-                        <Label htmlFor="provided">What's Provided</Label>
+                        <Label htmlFor="provided">What is Provided</Label>
                         <Textarea
                             id="provided"
                             name="provided"
@@ -263,28 +371,22 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                             <HiddenFileInput id="image" type="file" accept="image/*" onChange={handleFileChange} />
                         </FileInputLabel>
 
-                        {imageFile && (
-                            <div style={{ marginTop: '8px', color: '#b3b3b3' }}>
-                                <div>{imageFile.name}</div>
-                                {imageFile.preview && (
-                                    <img
-                                        src={imageFile.preview}
-                                        alt="Selected"
-                                        style={{ marginTop: '6px', height: '100px', borderRadius: '8px' }}
-                                    />
-                                )}
-                                {meetupId && onImageUpdate && imageFile && (imageFile as any)?.file instanceof File && (
+                        {imageFile && (imageFile.name || imageFile.preview) && (
+                            <ImagePreviewContainer>
+                                {imageFile.name && <div>{imageFile.name}</div>}
+                                {imageFile.preview && <img src={imageFile.preview} alt="Selected" />}
+                                {meetupId && onImageUpdate && imageFile.file instanceof File && (
                                     <Button
                                         type="button"
                                         variant="secondary"
                                         onClick={handleImageUpdate}
                                         disabled={isUpdatingImage}
-                                        style={{ marginTop: '8px' }}
+                                        style={{ marginTop: themeColors.spacing.sm }}
                                     >
                                         {isUpdatingImage ? 'Updating...' : 'Update Image'}
                                     </Button>
                                 )}
-                            </div>
+                            </ImagePreviewContainer>
                         )}
                     </FormGroup>
 

@@ -1,4 +1,4 @@
-import { ApiResponse, PaginationParams } from '@/types/common';
+import { ApiResponse } from '@/types/common';
 import {
     Meetup,
     MeetupFormData,

@@ -17,9 +17,22 @@ export type StatusCodeConfig = {
     hideAfter?: number;
     customMessage?: string;
     onSuccess?: () => void;
-    onError?: (error: any) => void;
+    onError?: (error: { statusCode?: number; message?: string; originalError?: unknown }) => void;
 };
-export const useStatusHandler = (messageApi?: any) => {
+
+export type MessageApi = {
+    success: (content: React.ReactNode | string, duration?: number, onClose?: () => void) => void;
+    error: (content: React.ReactNode | string, duration?: number, onClose?: () => void) => void;
+    warning: (content: React.ReactNode | string, duration?: number, onClose?: () => void) => void;
+    info: (content: React.ReactNode | string, duration?: number, onClose?: () => void) => void;
+    loading: (content: React.ReactNode | string, duration?: number, onClose?: () => void) => void;
+    open: (config: {
+        content: React.ReactNode | string;
+        type: 'success' | 'error' | 'warning' | 'info' | 'loading';
+    }) => void;
+};
+
+export const useStatusHandler = (messageApi?: MessageApi) => {
     const [loading, setLoading] = useState(false);
 
     const handleStatus = useCallback(

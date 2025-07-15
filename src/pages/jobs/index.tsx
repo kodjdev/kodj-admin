@@ -44,6 +44,7 @@ export default function JobsPage() {
             await fetchJobs();
         } catch (err) {
             messageApi.error('Failed to delete job post');
+            console.error('Failed to delete job post:', err);
         }
     };
 

@@ -26,8 +26,8 @@ export default function LoginPage() {
         try {
             setLoading(true);
             await verifyOtp(email, otp);
-        } catch (_) {
-            /* handled in context */
+        } catch (err) {
+            console.error('OTP verification failed:', err);
         } finally {
             setLoading(false);
         }

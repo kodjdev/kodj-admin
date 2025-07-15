@@ -154,7 +154,7 @@ export default function StyledOtpSection({
 
             {onResendClick && (
                 <ResendSection>
-                    <ResendText>Didn't receive the code?</ResendText>
+                    <ResendText>Didn`&apos;`t receive the code?</ResendText>
                     <ResendButton onClick={onResendClick} disabled={resendDisabled}>
                         {resendDisabled && resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend'}
                     </ResendButton>

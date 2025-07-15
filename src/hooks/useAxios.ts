@@ -1,16 +1,16 @@
 import { ApiResponse } from '@/types/common';
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { useCallback, useState } from 'react';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 type FetchOptions<T> = {
     endpoint: string;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-    data?: any;
-    params?: Record<string, any>;
+    data?: unknown;
+    params?: Record<string, string | number | boolean>;
     customHeaders?: Record<string, string>;
     onSuccess?: (response: ApiResponse<T>) => void;
-    onError?: (error: Error | AxiosError) => void;
+    onError?: (error: Error) => void;
     withCredentials?: boolean;
 };
 
@@ -18,18 +18,20 @@ const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-test.kodj.de
 
 export default function useAxios() {
     const router = useRouter();
-    const [error, setError] = useState<Error | null>(null);
 
-    const axiosInstance = axios.create({
-        baseURL: apiUrl,
-        withCredentials: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+    // useMemo is used to create the axios instance only once.
+    // The instance and its interceptors will not be recreated on every render.
+    const axiosInstance = useMemo(() => {
+        const instance = axios.create({
+            baseURL: apiUrl,
+            withCredentials: true,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-    const setupInterceptors = (axiosInstance: AxiosInstance) => {
-        axiosInstance.interceptors.request.use(
+        // Request interceptor to add the auth token
+        instance.interceptors.request.use(
             (config) => {
                 const accessToken = localStorage.getItem('access_token');
                 if (accessToken && config.headers && !config.headers.Authorization) {
@@ -40,20 +42,24 @@ export default function useAxios() {
             (error) => Promise.reject(error),
         );
 
-        axiosInstance.interceptors.response.use(
+        // Response interceptor to handle token refresh
+        instance.interceptors.response.use(
             (response) => response,
             async (error) => {
                 const originalRequest = error.config;
 
+                // Handle 401 Unauthorized errors
                 if (error.response?.status === 401 && !originalRequest._retry) {
-                    originalRequest._retry = true;
+                    originalRequest._retry = true; // Mark request as retried to prevent infinite loops
 
                     try {
                         const refreshToken = localStorage.getItem('refresh_token');
                         if (!refreshToken) {
-                            throw new Error('No refresh token');
+                            // If no refresh token, we can't do anything.
+                            throw new Error('No refresh token available.');
                         }
 
+                        // Request a new access token using the refresh token
                         const response = await axios.post(
                             `${apiUrl}/auth/token/refresh`,
                             {},
@@ -66,26 +72,36 @@ export default function useAxios() {
                         );
 
                         if (response.data?.data?.access_token) {
-                            localStorage.setItem('access_token', response.data.data.access_token);
-                            localStorage.setItem('refresh_token', response.data.data.refresh_token);
+                            const { access_token, refresh_token } = response.data.data;
+                            // Store the new tokens
+                            localStorage.setItem('access_token', access_token);
+                            localStorage.setItem('refresh_token', refresh_token);
 
-                            originalRequest.headers.Authorization = `Bearer ${response.data.data.access_token}`;
-                            return axiosInstance(originalRequest);
+                            // Update the authorization header for the original request
+                            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+                            // Retry the original request with the new token
+                            return instance(originalRequest);
                         }
                     } catch (refreshError) {
+                        // If refresh fails, clear auth data and redirect to login
                         localStorage.removeItem('access_token');
                         localStorage.removeItem('refresh_token');
                         router.push('/login');
+                        console.error('Token refresh failed:', refreshError);
+                        return Promise.reject(refreshError);
                     }
                 }
 
                 return Promise.reject(error);
             },
         );
-    };
 
-    setupInterceptors(axiosInstance);
+        return instance;
+    }, [router]); // The router instance from Next.js is stable
 
+    // This useCallback now depends only on the memoized axiosInstance,
+    // so it will not be recreated on every render.
     return useCallback(
         async <T = unknown>({
             endpoint,
@@ -109,73 +125,17 @@ export default function useAxios() {
                     withCredentials,
                 };
 
+                // Assign data only if it's not null
                 if (data) {
-                    if (data instanceof FormData) {
-                        /* we use the axios directly without instance defaults for formData */
-                        try {
-                            const response: AxiosResponse = await axios({
-                                method,
-                                url: `${apiUrl}${endpoint}`,
-                                data,
-                                params,
-                                headers: {
-                                    ...customHeaders,
-                                },
-                                withCredentials,
-                            });
-
-                            console.log(`useAxios: Received response with status ${response.status}`);
-
-                            const apiResponse: ApiResponse<T> = {
-                                data: response.data,
-                                statusCode: response.status,
-                                message: response.data.message || 'success',
-                            };
-
-                            if (onSuccess) {
-                                onSuccess(apiResponse);
-                            }
-
-                            return apiResponse;
-                        } catch (formDataError) {
-                            if (formDataError instanceof AxiosError && formDataError.response) {
-                                return {
-                                    data: null,
-                                    statusCode: formDataError.response.status,
-                                    message: formDataError.response.data?.message || 'Request failed',
-                                    error: true,
-                                } as any;
-                            }
-                            throw formDataError;
-                        }
-                    } else if (typeof data === 'object' && Object.keys(data).includes('credential')) {
-                        config.data = {
-                            credential: data.credential,
-                        };
-                    } else {
-                        config.data = data;
-                    }
+                    config.data = data;
                 }
 
-                /* for non-formData requests, we use the configured instance with error handling */
-                let response: AxiosResponse;
-
-                try {
-                    response = await axiosInstance(config);
-                } catch (axiosError) {
-                    if (axiosError instanceof AxiosError && axiosError.response) {
-                        console.error('Axios error caught:', axiosError.response.status, axiosError.response.data);
-
-                        return {
-                            data: axiosError.response.data,
-                            statusCode: axiosError.response.status,
-                            message: axiosError.response.data?.message || axiosError.message || 'Request failed',
-                            error: true,
-                        } as any;
-                    }
-
-                    throw axiosError;
+                if (data instanceof FormData && config.headers) {
+                    delete config.headers['Content-Type'];
                 }
+
+                // All requests now use the same instance, including FormData requests.
+                const response: AxiosResponse = await axiosInstance(config);
 
                 console.log(`useAxios: Received response with status ${response.status}`);
 
@@ -185,8 +145,6 @@ export default function useAxios() {
                     message: response.data.message || 'success',
                 };
 
-                console.log('useAxios: Parsed response data:', apiResponse);
-
                 if (onSuccess) {
                     onSuccess(apiResponse);
                 }
@@ -195,20 +153,35 @@ export default function useAxios() {
             } catch (error: unknown) {
                 console.error(`useAxios unexpected error (${method} ${url}):`, error);
 
-                if (onError) {
-                    onError(error as Error | AxiosError);
-                } else {
-                    setError({
-                        name: 'AxiosError',
-                        stack: (error as Error).stack,
-                        message: `Request to ${endpoint} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                    });
+                if (error instanceof AxiosError && error.response) {
+                    // This is a structured error from an API response (e.g., 404, 500)
+                    const apiResponse = {
+                        data: error.response.data as T,
+                        statusCode: error.response.status,
+                        message: error.response.data?.message || 'Request failed',
+                        error: true,
+                    };
+                    if (onError) {
+                        onError(new Error(apiResponse.message));
+                    }
+                    return apiResponse;
                 }
 
-                /* for a completely unexpected errors, we throw an error */
-                throw error;
+                // This is a network error or some other unexpected issue
+                const message = error instanceof Error ? error.message : 'An unknown error occurred';
+                if (onError) {
+                    onError(new Error(message));
+                }
+
+                // Return a consistent error structure for unhandled errors
+                return {
+                    data: null as T,
+                    statusCode: 500,
+                    message: `Request to ${endpoint} failed: ${message}`,
+                    error: true,
+                };
             }
         },
-        [setError, axiosInstance, router],
+        [axiosInstance], // Dependency is now stable
     );
 }

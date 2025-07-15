@@ -3,7 +3,7 @@
 import { useRouter } from 'next/router';
 import MeetupForm from '@/components/meetups/MeetupForm';
 import { useMeetupService } from '@/services/api/meetupService';
-import { Meetup, MeetupFormData } from '@/types/meetup';
+import { Meetup } from '@/types/meetup';
 import { useEffect, useState } from 'react';
 import { message } from 'antd';
 import { useStatusHandler } from '@/hooks/useStatusCode';
@@ -16,7 +16,7 @@ export default function EditMeetupPage() {
     const { handleAsyncOperation } = useStatusHandler(messageApi);
 
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState<MeetupFormData | null>(null);
+    const [formData, setFormData] = useState<Meetup | null>(null);
 
     useEffect(() => {
         if (!router.isReady || !id) return;
@@ -30,22 +30,22 @@ export default function EditMeetupPage() {
                     }
 
                     const raw = response.data.data;
-                    console.log('Fetched meetup details:', raw);
+                    console.log('Fetched raw meetup details:', raw);
 
-                    const mapped: MeetupFormData = {
+                    const mapped: Meetup = {
+                        id: raw.id,
                         title: raw.title,
                         description: raw.description,
                         parking: raw.parking,
                         location: raw.location,
                         maxSeats: raw.maxSeats,
-                        provided: raw.provided,
+                        availableSeats: raw.availableSeats,
+                        provided: raw.provided || '',
                         meetupDate: raw.meetupDate,
                         startTime: raw.startTime,
                         endTime: raw.endTime,
                         imageName: raw.imageName ?? '',
                         imageURL: raw.imageURL ?? '',
-                        speakers: raw.speakers ?? [],
-                        keynoteSessions: raw.keynoteSessions ?? [],
                     };
 
                     return mapped;
@@ -63,17 +63,20 @@ export default function EditMeetupPage() {
             setLoading(false);
         };
         fetchDetails();
-    }, [router.isReady, id]);
+    }, [router.isReady, id, getMeetupDetails, handleAsyncOperation]);
 
-    const handleUpdate = async (updatedData: Meetup) => {
+    const handleUpdate = async (updatedData: Omit<Meetup, 'id' | 'availableSeats'>) => {
         await handleAsyncOperation(
             async () => {
-                const response = await updateMeetup(Number(id), updatedData);
+                const submitData: Meetup = {
+                    ...updatedData,
+                    id: Number(id),
+                    availableSeats: formData?.availableSeats ?? 0,
+                };
+                const response = await updateMeetup(Number(id), submitData);
                 if (response.statusCode !== 200) {
-                    messageApi.error('Failed to update meetup');
-                    // throw new Error('Failed to update meetup');
+                    throw new Error(response.message || 'Failed to update meetup');
                 }
-                messageApi.success('Meetup updated successfully! Redirecting...');
                 return response;
             },
             {
@@ -92,11 +95,7 @@ export default function EditMeetupPage() {
             async () => {
                 const response = await updateMeetupMedia(Number(id), imageFile);
                 if (response.statusCode !== 200) {
-                    messageApi.error('Failed to update image');
-                    throw new Error('Failed to update image');
-                }
-                if (response.statusCode === 200) {
-                    messageApi.success('Image updated successfully!');
+                    throw new Error(response.message || 'Failed to update image');
                 }
                 return response;
             },
@@ -115,7 +114,7 @@ export default function EditMeetupPage() {
         <>
             {contextHolder}
             <MeetupForm
-                meetupId={String(id)}
+                meetupId={Number(id)}
                 initialData={formData}
                 onSubmit={handleUpdate}
                 onImageUpdate={handleImageUpdate}

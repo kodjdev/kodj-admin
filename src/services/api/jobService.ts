@@ -1,5 +1,5 @@
 import { ApiResponse, PaginationParams } from '@/types/common';
-import { JobPost, JobFormData, JobApiResponse, JobsApiResponse } from '@/types/job';
+import { JobFormData, JobApiResponse, JobsApiResponse } from '@/types/job';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 
