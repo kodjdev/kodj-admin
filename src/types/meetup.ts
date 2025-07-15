@@ -1,4 +1,5 @@
 type BaseMeetup = {
+    id: number;
     title: string;
     description: string;
     parking: boolean;
@@ -8,6 +9,7 @@ type BaseMeetup = {
     meetupDate: string;
     startTime: string;
     endTime: string;
+    availableSeats: number;
 };
 
 export type Meetup = BaseMeetup & {

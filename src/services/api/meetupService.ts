@@ -25,7 +25,11 @@ export const useMeetupService = () => {
                 return await fetchData<PaginatedResponse<Meetup>>({
                     endpoint: '/public/meetups',
                     method: 'GET',
-                    params,
+                    params: {
+                        page: params?.page?.toString() || '0',
+                        size: params?.size?.toString() || '50',
+                        type: params?.type || 'upcoming',
+                    },
                 });
             },
 

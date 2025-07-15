@@ -8,10 +8,13 @@ import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/common/Table';
 import { Meetup } from '@/types/meetup';
 
 type MeetupListProps = {
-    meetups: Meetup[];
-    loading: boolean;
-    error: string | null;
-    onDelete: (id: number) => Promise<void>;
+    upcomingMeetups: Meetup[];
+    pastMeetups: Meetup[];
+    loadingUpcoming: boolean;
+    loadingPast: boolean;
+    errorUpcoming: string | null;
+    errorPast: string | null;
+    onDelete: (id: number, type: 'upcoming' | 'past') => Promise<void>;
     onEdit: (id: number) => void;
     onCreate: () => void;
 };
@@ -30,17 +33,24 @@ const HeaderContainer = styled.div`
 `;
 
 const PageTitle = styled.h1`
-    color: #ffffff;
+    color: ${themeColors.colors.neutral.white};
     font-size: ${themeColors.typography.headings.desktop.h3.fontSize}px;
     font-weight: ${themeColors.typography.headings.desktop.h3.fontWeight};
     margin: 0;
 `;
 
+const SectionTitle = styled.h2`
+    margin-top: ${themeColors.spacing.xl};
+    margin-bottom: ${themeColors.spacing.md};
+    font-size: ${themeColors.typography.headings.desktop.h4.fontSize}px;
+    color: ${themeColors.colors.neutral.white};
+`;
+
 const TableCard = styled.div`
-    background-color: #1a1a1a;
-    border: 1px solid #2a2a2a;
+    border: 1px solid ${themeColors.colors.neutral.gray700};
     border-radius: ${themeColors.cardBorder.lg};
     overflow: hidden;
+    margin-bottom: ${themeColors.spacing.xl};
 `;
 
 const ActionButtons = styled.div`
@@ -72,15 +82,50 @@ const AvailabilityBadge = styled.span<{ $available: boolean }>`
     color: ${(props) => (props.$available ? '#10b981' : '#ef4444')};
 `;
 
-export default function MeetupList({ meetups, onDelete, onEdit, onCreate }: MeetupListProps) {
-    return (
-        <Container>
-            <HeaderContainer>
-                <PageTitle>Meetup Management</PageTitle>
-                <CreateButton onClick={onCreate}>Create Meetup</CreateButton>
-            </HeaderContainer>
+const ErrorMessage = styled.p`
+    color: ${themeColors.colors.error.main};
+    margin-top: ${themeColors.spacing.md};
+    margin-bottom: ${themeColors.spacing.md};
+    text-align: center;
+`;
 
-            <TableCard>
+const LoadingMessage = styled.p`
+    color: ${themeColors.colors.neutral.gray300};
+    margin-top: ${themeColors.spacing.md};
+    margin-bottom: ${themeColors.spacing.md};
+    text-align: center;
+`;
+
+const NoMeetupsMessage = styled.p`
+    color: ${themeColors.colors.neutral.gray400};
+    margin-top: ${themeColors.spacing.md};
+    margin-bottom: ${themeColors.spacing.md};
+    text-align: center;
+`;
+
+const MeetupTableSection: React.FC<{
+    title: string;
+    meetups: Meetup[];
+    loading: boolean;
+    error: string | null;
+    onDelete: (id: number) => Promise<void>;
+    onEdit: (id: number) => void;
+    meetupType: 'upcoming' | 'past';
+}> = ({ title, meetups, loading, error, onDelete, onEdit, meetupType }) => (
+    <>
+        <SectionTitle>{title}</SectionTitle>
+        <TableCard>
+            {loading && <LoadingMessage>Loading {title.toLowerCase()}...</LoadingMessage>}
+            {error && (
+                <ErrorMessage>
+                    Error fetching {title.toLowerCase()}: {error}
+                </ErrorMessage>
+            )}
+            {!loading && !error && meetups.length === 0 && (
+                <NoMeetupsMessage>No {title.toLowerCase()} found.</NoMeetupsMessage>
+            )}
+
+            {!loading && !error && meetups.length > 0 && (
                 <Table>
                     <Thead>
                         <tr>
@@ -116,7 +161,48 @@ export default function MeetupList({ meetups, onDelete, onEdit, onCreate }: Meet
                         ))}
                     </Tbody>
                 </Table>
-            </TableCard>
+            )}
+        </TableCard>
+    </>
+);
+
+export default function MeetupList({
+    upcomingMeetups,
+    pastMeetups,
+    loadingUpcoming,
+    loadingPast,
+    errorUpcoming,
+    errorPast,
+    onDelete,
+    onEdit,
+    onCreate,
+}: MeetupListProps) {
+    return (
+        <Container>
+            <HeaderContainer>
+                <PageTitle>Meetup Management</PageTitle>
+                <CreateButton onClick={onCreate}>Create Meetup</CreateButton>
+            </HeaderContainer>
+
+            <MeetupTableSection
+                title="Upcoming Meetups"
+                meetups={upcomingMeetups}
+                loading={loadingUpcoming}
+                error={errorUpcoming}
+                onDelete={(id) => onDelete(id, 'upcoming')}
+                onEdit={onEdit}
+                meetupType="upcoming"
+            />
+
+            <MeetupTableSection
+                title="Past Meetups"
+                meetups={pastMeetups}
+                loading={loadingPast}
+                error={errorPast}
+                onDelete={(id) => onDelete(id, 'past')}
+                onEdit={onEdit}
+                meetupType="past"
+            />
         </Container>
     );
 }
