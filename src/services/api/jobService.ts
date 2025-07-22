@@ -40,9 +40,9 @@ export const useJobService = () => {
                     endpoint: '/admin/job-posts',
                     method: 'POST',
                     data: formData,
-                    customHeaders: {
-                        'Content-Type': 'multipart/form-data',
-                    },
+                    // customHeaders: {
+                    //     'Content-Type': 'multipart/form-data',
+                    // },
                 });
             },
 
@@ -63,9 +63,9 @@ export const useJobService = () => {
                     endpoint: `/admin/job-posts/${id}`,
                     method: 'PUT',
                     data: formData,
-                    customHeaders: {
-                        'Content-Type': 'multipart/form-data',
-                    },
+                    // customHeaders: {
+                    //     'Content-Type': 'multipart/form-data',
+                    // },
                 });
             },
 

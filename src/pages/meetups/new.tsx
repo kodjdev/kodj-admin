@@ -13,17 +13,10 @@ export default function NewMeetupPage() {
     const [messageApi, contextHolder] = message.useMessage();
     const { handleAsyncOperation } = useStatusHandler(messageApi);
 
-    const handleCreate = async (meetupData: Omit<Meetup, 'id' | 'availableSeats'>) => {
+    const handleCreate = async (meetupData: Omit<Meetup, 'id' | 'availableSeats'>, imageFile: File | null) => {
         await handleAsyncOperation(
             async () => {
-                const submitData: MeetupFormData = {
-                    ...meetupData,
-                    imageName: '',
-                    imageURL: '',
-                    speakers: [],
-                    keynoteSessions: [],
-                };
-                const response = await createMeetup(submitData);
+                const response = await createMeetup(meetupData, imageFile);
                 if (response.statusCode !== 201) {
                     throw new Error(response.message || 'Failed to create meetup');
                 }

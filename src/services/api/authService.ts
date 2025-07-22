@@ -48,7 +48,7 @@ export const useAuthService = () => {
                 });
             },
 
-            verifyLoginOtp: async (email: string, otp: string) => {
+            verifyLoginOtp: async (email: string, otp: number) => {
                 return fetchData<TokenResponse>({
                     endpoint: '/auth/verify-login-otp',
                     method: 'POST',

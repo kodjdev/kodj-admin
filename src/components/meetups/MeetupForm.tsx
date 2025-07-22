@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Ca
 import { Input, Textarea, Checkbox, Label, FileInputLabel, Form } from '@/components/common/Form';
 import { themeColors } from '@/themes/themeColors';
 import { Meetup } from '@/types/meetup';
+import dayjs, { Dayjs } from 'dayjs';
+import { DatePicker, TimePicker } from 'antd';
 
 type ImageFileState = {
     name: string;
@@ -15,16 +17,17 @@ type ImageFileState = {
     file?: File;
 };
 
-type InternalMeetupFormData = Omit<Meetup, 'id' | 'availableSeats' | 'startTime' | 'endTime'> & {
-    startTime: string;
-    endTime: string;
-};
-
 export type MeetupFormProps = {
     meetupId?: number;
     initialData?: Meetup;
     onSubmit: (formData: Omit<Meetup, 'id' | 'availableSeats'>, imageFile: File | null) => Promise<void>;
     onImageUpdate?: (imageFile: File) => Promise<void>;
+};
+
+type InternalMeetupFormData = Omit<Meetup, 'id' | 'availableSeats' | 'startTime' | 'endTime' | 'meetupDate'> & {
+    startTime: Dayjs | null;
+    endTime: Dayjs | null;
+    meetupDate: Dayjs | null;
 };
 
 const FormGroup = styled.div`
@@ -97,30 +100,14 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
         location: '',
         maxSeats: 1,
         provided: '',
-        meetupDate: '',
-        startTime: '',
-        endTime: '',
+        meetupDate: null,
+        startTime: null,
+        endTime: null,
         image: '',
     });
+
     const [imageFile, setImageFile] = useState<ImageFileState | null>(null);
     const [isUpdatingImage, setIsUpdatingImage] = useState(false);
-
-    const formatToDateTimeLocal = (dateString: string, timeString: string): string => {
-        if (!dateString || !timeString) return '';
-        const [hours, minutes] = timeString.split(':');
-        return `${dateString}T${hours}:${minutes}`;
-    };
-
-    const extractDateFromDateTimeLocal = (dateTimeLocalString: string): string => {
-        if (!dateTimeLocalString) return '';
-        return dateTimeLocalString.split('T')[0] || '';
-    };
-
-    const extractTimeFromDateTimeLocal = (dateTimeLocalString: string): string => {
-        if (!dateTimeLocalString) return '';
-        const timePart = dateTimeLocalString.split('T')[1] || '';
-        return `${timePart}:00`;
-    };
 
     useEffect(() => {
         if (!initialData) {
@@ -131,16 +118,14 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                 location: '',
                 maxSeats: 1,
                 provided: '',
-                meetupDate: '',
-                startTime: '',
-                endTime: '',
+                meetupDate: null,
+                startTime: null,
+                endTime: null,
                 image: '',
             });
             setImageFile(null);
             return;
         }
-
-        console.log('InitialData in MeetupForm:', initialData);
 
         setFormData({
             title: initialData.title || '',
@@ -149,9 +134,9 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
             location: initialData.location || '',
             maxSeats: initialData.maxSeats || 1,
             provided: initialData.provided || '',
-            meetupDate: initialData.meetupDate || '',
-            startTime: formatToDateTimeLocal(initialData.meetupDate, initialData.startTime),
-            endTime: formatToDateTimeLocal(initialData.meetupDate, initialData.endTime),
+            meetupDate: initialData.meetupDate ? dayjs(initialData.meetupDate) : null,
+            startTime: initialData.startTime ? dayjs(initialData.startTime) : null,
+            endTime: initialData.endTime ? dayjs(initialData.endTime) : null,
             image: initialData.imageName || '',
         });
 
@@ -173,17 +158,6 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
             setFormData((prev) => ({
                 ...prev,
                 [name]: target.checked,
-            }));
-        } else if (name === 'meetupDate') {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        } else if (name === 'startTime' || name === 'endTime') {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-                meetupDate: name === 'startTime' ? extractDateFromDateTimeLocal(value) : prev.meetupDate,
             }));
         } else {
             setFormData((prev) => ({
@@ -226,6 +200,10 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
         e.preventDefault();
 
         if (onSubmit) {
+            const meetupDateStr = formData.meetupDate ? formData.meetupDate.format('YYYY-MM-DD') : '';
+            const startTimeStr = formData.startTime ? formData.startTime.format('HH:mm:ss') : '';
+            const endTimeStr = formData.endTime ? formData.endTime.format('HH:mm:ss') : '';
+
             const submittedFormData: Omit<Meetup, 'id' | 'availableSeats'> = {
                 title: formData.title,
                 description: formData.description,
@@ -233,9 +211,9 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                 location: formData.location,
                 maxSeats: formData.maxSeats,
                 provided: formData.provided,
-                meetupDate: extractDateFromDateTimeLocal(formData.startTime),
-                startTime: extractTimeFromDateTimeLocal(formData.startTime),
-                endTime: extractTimeFromDateTimeLocal(formData.endTime),
+                meetupDate: meetupDateStr,
+                startTime: `${meetupDateStr}T${startTimeStr}`,
+                endTime: `${meetupDateStr}T${endTimeStr}`,
                 image: formData.image,
             };
 
@@ -309,38 +287,58 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                     <FormRow className="three-column">
                         <FormGroup>
                             <Label htmlFor="meetupDate">Meetup Date *</Label>
-                            <Input
+                            <DatePicker
                                 id="meetupDate"
-                                name="meetupDate"
-                                type="date"
                                 value={formData.meetupDate}
-                                onChange={handleChange}
-                                required
-                                disabled
+                                onChange={(date) => setFormData((prev) => ({ ...prev, meetupDate: date }))}
+                                format="YYYY-MM-DD"
+                                style={{
+                                    width: '100%',
+                                    backgroundColor: themeColors.dark.background,
+                                    color: themeColors.colors.success.light,
+                                    fontSize: themeColors.typography.body.small.fontSize,
+                                    borderRadius: themeColors.cardBorder.md,
+                                    borderColor: themeColors.colors.success.light + '50',
+                                }}
+                                placeholder="Select meetup date"
                             />
                         </FormGroup>
 
                         <FormGroup>
                             <Label htmlFor="startTime">Start Time *</Label>
-                            <Input
+                            <TimePicker
                                 id="startTime"
-                                name="startTime"
-                                type="datetime-local"
                                 value={formData.startTime}
-                                onChange={handleChange}
-                                required
+                                onChange={(time) => setFormData((prev) => ({ ...prev, startTime: time }))}
+                                format="HH:mm"
+                                style={{
+                                    width: '100%',
+                                    backgroundColor: themeColors.dark.background,
+                                    color: themeColors.colors.success.light,
+                                    fontSize: themeColors.typography.body.small.fontSize,
+                                    borderRadius: themeColors.cardBorder.md,
+                                    borderColor: themeColors.colors.success.light + '50',
+                                }}
+                                placeholder="Select start time"
                             />
                         </FormGroup>
 
                         <FormGroup>
                             <Label htmlFor="endTime">End Time *</Label>
-                            <Input
+                            <TimePicker
                                 id="endTime"
-                                name="endTime"
-                                type="datetime-local"
                                 value={formData.endTime}
-                                onChange={handleChange}
-                                required
+                                onChange={(time) => setFormData((prev) => ({ ...prev, endTime: time }))}
+                                format="HH:mm"
+                                style={{
+                                    width: '100%',
+                                    backgroundColor: themeColors.dark.background,
+                                    color: themeColors.colors.success.light,
+                                    fontSize: themeColors.typography.body.small.fontSize,
+                                    borderRadius: themeColors.cardBorder.md,
+                                    borderColor: themeColors.colors.success.light + '50',
+                                }}
+                                placeholder="Select end time"
                             />
                         </FormGroup>
                     </FormRow>

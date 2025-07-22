@@ -25,7 +25,7 @@ export default function LoginPage() {
     const handleVerifyOtp = async () => {
         try {
             setLoading(true);
-            await verifyOtp(email, otp);
+            await verifyOtp(otp);
         } catch (err) {
             console.error('OTP verification failed:', err);
         } finally {

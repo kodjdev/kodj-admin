@@ -55,24 +55,24 @@ const InputGroup = styled.div`
     position: relative;
 `;
 
-const OtpInput = styled.input`
-    width: 100%;
-    padding: ${themeColors.spacing.md} ${themeColors.spacing.lg};
+const OtpInputContainer = styled.div`
+    display: flex;
+    gap: ${themeColors.spacing.sm};
+    justify-content: center;
+`;
+
+const SingleOtpInput = styled.input`
+    width: 60px;
+    height: 60px;
     background: ${themeColors.dark.inputBackground};
     border: 2px solid ${themeColors.dark.inputBorder};
-    border-radius: ${themeColors.cardBorder.md};
+    border-radius: 20%;
     color: ${themeColors.dark.text};
-    font-size: ${themeColors.typography.body.regular.fontSize}px;
+    font-size: ${themeColors.typography.body.large.fontSize}px;
     font-family: ${themeColors.typography.fontFamily.primary};
     text-align: center;
-    letter-spacing: 2px;
     transition: all ${themeColors.transitions.normal} ease;
     box-sizing: border-box;
-
-    &::placeholder {
-        color: ${themeColors.dark.placeholder};
-        letter-spacing: normal;
-    }
 
     &:focus {
         outline: none;
@@ -128,6 +128,42 @@ export default function StyledOtpSection({
     resendDisabled = false,
     resendCountdown = 0,
 }: StyledOtpSectionProps) {
+    const handlePaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 5);
+
+        if (pastedData.length > 0) {
+            onOtpChange(pastedData.padEnd(5, ''));
+
+            // Focus the next empty input or last input
+            const nextIndex = Math.min(pastedData.length, 4);
+            const nextInput = document.querySelector(`input[data-index="${nextIndex}"]`) as HTMLInputElement;
+            nextInput?.focus();
+        }
+    };
+
+    const handleOtpChange = (value: string, index: number) => {
+        const newOtp = otp.split('');
+        newOtp[index] = value;
+        const updatedOtp = newOtp.join('');
+
+        if (updatedOtp.length <= 5) {
+            onOtpChange(updatedOtp);
+
+            if (value && index < 4) {
+                const nextInput = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement;
+                nextInput?.focus();
+            }
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            const prevInput = document.querySelector(`input[data-index="${index - 1}"]`) as HTMLInputElement;
+            prevInput?.focus();
+        }
+    };
+
     const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
 
     return (
@@ -138,19 +174,30 @@ export default function StyledOtpSection({
             </BackButton>
 
             <OtpMessage>
-                Enter the 6-digit code sent to <EmailHighlight>{maskedEmail}</EmailHighlight>
+                Enter the 5-digit code sent to
+                <EmailHighlight>{maskedEmail}</EmailHighlight>
             </OtpMessage>
 
-            <InputGroup>
-                <OtpInput
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={otp}
-                    onChange={(e) => onOtpChange(e.target.value)}
-                    maxLength={6}
-                    autoComplete="one-time-code"
-                />
-            </InputGroup>
+            <OtpInputContainer>
+                {Array.from({ length: 5 }, (_, index) => (
+                    <SingleOtpInput
+                        key={index}
+                        data-index={index}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]"
+                        maxLength={1}
+                        value={otp[index] || ''}
+                        onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            handleOtpChange(value, index);
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, index)}
+                        onPaste={handlePaste}
+                        autoComplete="one-time-code"
+                    />
+                ))}
+            </OtpInputContainer>
 
             {onResendClick && (
                 <ResendSection>

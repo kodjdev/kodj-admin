@@ -13,7 +13,7 @@ type AuthContextType = {
     login: (accessToken: string, refreshToken: string, user: User) => void;
     logout: () => void;
     error: string | null;
-    verifyOtp: (email: string, otp: string) => Promise<boolean>;
+    verifyOtp: (otp: string) => Promise<boolean>;
     otpSent: boolean;
     sendOtp: (email: string, password: string) => Promise<boolean>;
     resetOtp: () => void;
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setError('Email not found for OTP verification. Please try logging in again.');
                     return false;
                 }
-                const response = await authService.verifyLoginOtp(tempEmail, otp);
+                const response = await authService.verifyLoginOtp(tempEmail, Number(otp));
                 if (response.data.data.access_token && response.data.data.refresh_token) {
                     const { access_token, refresh_token } = response.data.data;
 

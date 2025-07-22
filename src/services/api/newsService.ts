@@ -54,7 +54,6 @@ export const useNewsService = () => {
                     data: formData,
                     customHeaders: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
                     },
                 });
             },

@@ -40,18 +40,33 @@ export const useMeetupService = () => {
                 });
             },
 
-            createMeetup: async (meetupData: MeetupFormData): Promise<ApiResponse<Meetup>> => {
+            createMeetup: async (
+                meetupData: Omit<Meetup, 'id' | 'availableSeats'>,
+                imageFile?: File | null,
+            ): Promise<ApiResponse<Meetup>> => {
                 const formData = new FormData();
 
-                Object.entries(meetupData).forEach(([key, value]) => {
+                const fieldsToSend = {
+                    title: meetupData.title,
+                    description: meetupData.description,
+                    parking: meetupData.parking,
+                    location: meetupData.location,
+                    maxSeats: meetupData.maxSeats,
+                    provided: meetupData.provided,
+                    meetupDate: meetupData.meetupDate,
+                    startTime: meetupData.startTime,
+                    endTime: meetupData.endTime,
+                };
+
+                Object.entries(fieldsToSend).forEach(([key, value]) => {
                     if (value !== undefined && value !== null) {
-                        if (key === 'image' && value instanceof File) {
-                            formData.append(key, value);
-                        } else {
-                            formData.append(key, String(value));
-                        }
+                        formData.append(key, String(value));
                     }
                 });
+
+                if (imageFile instanceof File) {
+                    formData.append('image', imageFile);
+                }
 
                 const accessToken = localStorage.getItem('access_token');
 
@@ -61,7 +76,6 @@ export const useMeetupService = () => {
                     data: formData,
                     customHeaders: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
                     },
                 });
             },
@@ -90,7 +104,6 @@ export const useMeetupService = () => {
                     data: formData,
                     customHeaders: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
                     },
                 });
             },
@@ -123,7 +136,6 @@ export const useMeetupService = () => {
                     data: formData,
                     customHeaders: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
                     },
                 });
             },
@@ -179,9 +191,6 @@ export const useMeetupService = () => {
                     endpoint: `/meetups/${meetupId}/keynotes`,
                     method: 'POST',
                     data: formData,
-                    customHeaders: {
-                        'Content-Type': 'multipart/form-data',
-                    },
                 });
             },
 
