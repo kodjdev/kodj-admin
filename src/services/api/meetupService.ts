@@ -1,7 +1,6 @@
 import { ApiResponse } from '@/types/common';
 import {
     Meetup,
-    MeetupFormData,
     Speaker,
     SpeakerFormData,
     Note,

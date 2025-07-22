@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import MeetupForm from '@/components/meetups/MeetupForm';
 import { useMeetupService } from '@/services/api/meetupService';
-import { Meetup, MeetupFormData } from '@/types/meetup';
+import { Meetup } from '@/types/meetup';
 import { message } from 'antd';
 import { useStatusHandler } from '@/hooks/useStatusCode';
 

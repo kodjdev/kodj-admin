@@ -51,10 +51,6 @@ const EmailHighlight = styled.span`
     font-weight: 500;
 `;
 
-const InputGroup = styled.div`
-    position: relative;
-`;
-
 const OtpInputContainer = styled.div`
     display: flex;
     gap: ${themeColors.spacing.sm};
