@@ -212,8 +212,8 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                 maxSeats: formData.maxSeats,
                 provided: formData.provided,
                 meetupDate: meetupDateStr,
-                startTime: `${meetupDateStr}T${startTimeStr}`,
-                endTime: `${meetupDateStr}T${endTimeStr}`,
+                startTime: `${meetupDateStr} ${startTimeStr}`,
+                endTime: `${meetupDateStr} ${endTimeStr}`,
                 image: formData.image,
             };
 

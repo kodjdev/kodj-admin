@@ -17,7 +17,7 @@ export default function NewMeetupPage() {
         await handleAsyncOperation(
             async () => {
                 const response = await createMeetup(meetupData, imageFile);
-                if (response.statusCode !== 201) {
+                if (response.statusCode !== 200 && response.statusCode !== 201) {
                     throw new Error(response.message || 'Failed to create meetup');
                 }
                 return response;

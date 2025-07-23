@@ -109,7 +109,7 @@ export const useMeetupService = () => {
 
             deleteMeetup: async (id: number): Promise<ApiResponse<string>> => {
                 return await fetchData<string>({
-                    endpoint: `/meetups/${id}`,
+                    endpoint: `/admin/meetups/${id}`,
                     method: 'DELETE',
                 });
             },
@@ -130,7 +130,7 @@ export const useMeetupService = () => {
                 const accessToken = localStorage.getItem('access_token');
 
                 return await fetchData<Speaker>({
-                    endpoint: `admin/meetups/${meetupId}/speakers`,
+                    endpoint: `/admin/meetups/${meetupId}/speakers`,
                     method: 'POST',
                     data: formData,
                     customHeaders: {
@@ -145,7 +145,7 @@ export const useMeetupService = () => {
                 speakerData: Partial<SpeakerFormData>,
             ): Promise<ApiResponse<Speaker>> => {
                 return await fetchData<Speaker>({
-                    endpoint: `/meetups/${meetupId}/speakers/${speakerId}`,
+                    endpoint: `/admin/meetups/${meetupId}/speakers/${speakerId}`,
                     method: 'PUT',
                     data: speakerData,
                 });
@@ -153,14 +153,14 @@ export const useMeetupService = () => {
 
             deleteSpeaker: async (meetupId: number, speakerId: number): Promise<ApiResponse<string>> => {
                 return await fetchData<string>({
-                    endpoint: `/meetups/${meetupId}/speakers/${speakerId}`,
+                    endpoint: `/admin/meetups/${meetupId}/speakers/${speakerId}`,
                     method: 'DELETE',
                 });
             },
 
             addNote: async (meetupId: number, noteData: NoteFormData): Promise<ApiResponse<Note>> => {
                 return await fetchData<Note>({
-                    endpoint: `/meetups/${meetupId}/notes`,
+                    endpoint: `/admin/meetups/${meetupId}/notes`,
                     method: 'POST',
                     data: noteData,
                 });
@@ -168,7 +168,7 @@ export const useMeetupService = () => {
 
             deleteNote: async (meetupId: number, noteId: number): Promise<ApiResponse<string>> => {
                 return await fetchData<string>({
-                    endpoint: `/meetups/${meetupId}/notes/${noteId}`,
+                    endpoint: `/admin/meetups/${meetupId}/notes/${noteId}`,
                     method: 'DELETE',
                 });
             },
@@ -187,7 +187,7 @@ export const useMeetupService = () => {
                 });
 
                 return await fetchData<Keynote>({
-                    endpoint: `/meetups/${meetupId}/keynotes`,
+                    endpoint: `/admin/meetups/${meetupId}/keynotes`,
                     method: 'POST',
                     data: formData,
                 });
@@ -195,7 +195,7 @@ export const useMeetupService = () => {
 
             deleteKeynote: async (meetupId: number, keynoteId: number): Promise<ApiResponse<string>> => {
                 return await fetchData<string>({
-                    endpoint: `/meetups/${meetupId}/keynotes/${keynoteId}`,
+                    endpoint: `/admin/meetups/${meetupId}/keynotes/${keynoteId}`,
                     method: 'DELETE',
                 });
             },
