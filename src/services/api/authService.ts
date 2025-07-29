@@ -1,4 +1,4 @@
-import { ApiResponse, UserDetails } from '@/types/common';
+import { ApiResponse, User } from '@/types/common';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
 
@@ -21,10 +21,8 @@ type LoginResponse = {
 };
 
 type TokenResponse = {
-    data: {
-        access_token: string;
-        refresh_token: string;
-    };
+    access_token: string;
+    refresh_token: string;
 };
 
 export const useAuthService = () => {
@@ -76,8 +74,8 @@ export const useAuthService = () => {
                 });
             },
 
-            getUserDetails: async (token: string): Promise<ApiResponse<UserDetails>> => {
-                return fetchData<UserDetails>({
+            getUserDetails: async (token: string): Promise<ApiResponse<User>> => {
+                return fetchData<User>({
                     endpoint: '/users/details',
                     method: 'GET',
                     customHeaders: {

@@ -8,19 +8,13 @@ export type StatisticsData = {
     totalEvents: number;
 };
 
-export type StatisticsResponse = {
-    message: string;
-    data: StatisticsData;
-    statusCode: number;
-};
-
 export const useStatisticsService = () => {
     const fetchData = useAxios();
 
     return useMemo(
         () => ({
-            getStatistics: async (): Promise<ApiResponse<StatisticsResponse>> => {
-                return await fetchData<StatisticsResponse>({
+            getStatistics: async (): Promise<ApiResponse<StatisticsData>> => {
+                return await fetchData<StatisticsData>({
                     endpoint: '/public/statistics',
                     method: 'GET',
                     customHeaders: {

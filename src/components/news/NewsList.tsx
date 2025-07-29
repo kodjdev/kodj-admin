@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/common/Table';
+import { RefreshCwIcon } from 'lucide-react';
 
 type NewsListProps = {
     newsList: News[];
@@ -96,9 +97,9 @@ export default function NewsList({ newsList, loading, error, onDelete, onEdit, o
                 <PageTitle>News Management</PageTitle>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {onRefresh && (
-                        <AddButton variant="secondary" onClick={onRefresh} disabled={loading}>
-                            {loading ? 'Loading...' : 'Refresh'}
-                        </AddButton>
+                        <Button variant="transparent" onClick={onRefresh} disabled={loading}>
+                            {loading ? 'Loading...' : <RefreshCwIcon size={16} />}
+                        </Button>
                     )}
                     <AddButton onClick={onCreate}>Add News</AddButton>
                 </div>

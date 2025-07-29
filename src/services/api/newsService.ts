@@ -8,22 +8,14 @@ export const useNewsService = () => {
 
     return useMemo(
         () => ({
-            getNews: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<News[]>>> => {
-                const response = await fetchData<{
-                    data: PaginatedResponse<News[]>;
-                    message: string;
-                    statusCode: number;
-                }>({
+            getNews: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<News>>> => {
+                const response = await fetchData<PaginatedResponse<News>>({
                     endpoint: '/public/news',
                     method: 'GET',
                     params,
                 });
 
-                return {
-                    data: response.data.data,
-                    statusCode: response.statusCode,
-                    message: response.message,
-                };
+                return response;
             },
 
             getNewsById: async (id: number): Promise<ApiResponse<News>> => {

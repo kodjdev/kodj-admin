@@ -1,34 +1,32 @@
 import { User } from './common';
 
 export type JobsApiResponse = {
-    data: {
-        content: JobPost[];
-        pageable: {
-            pageNumber: number;
-            pageSize: number;
-            sort: {
-                empty: boolean;
-                sorted: boolean;
-                unsorted: boolean;
-            };
-            offset: number;
-            paged: boolean;
-            unpaged: boolean;
-        };
-        totalElements: number;
-        totalPages: number;
-        last: boolean;
-        size: number;
-        number: number;
+    content: JobPost[];
+    pageable: {
+        pageNumber: number;
+        pageSize: number;
         sort: {
             empty: boolean;
             sorted: boolean;
             unsorted: boolean;
         };
-        numberOfElements: number;
-        first: boolean;
-        empty: boolean;
+        offset: number;
+        paged: boolean;
+        unpaged: boolean;
     };
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
 };
 
 export type JobApiResponse = {
@@ -37,11 +35,11 @@ export type JobApiResponse = {
     statusCode: number;
 };
 
-export type JobResponse = {
-    message: string;
-    data: JobPost;
-    statusCode: number;
-};
+// export type JobResponse = {
+//     message: string;
+//     data: JobPost;
+//     statusCode: number;
+// };
 
 export type JobPost = {
     id: number;

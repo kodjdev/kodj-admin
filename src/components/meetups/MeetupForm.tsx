@@ -9,7 +9,7 @@ import { Input, Textarea, Checkbox, Label, FileInputLabel, Form } from '@/compon
 import { themeColors } from '@/themes/themeColors';
 import { Meetup } from '@/types/meetup';
 import dayjs, { Dayjs } from 'dayjs';
-import { DatePicker, TimePicker } from 'antd';
+import { DatePicker, message, TimePicker } from 'antd';
 
 type ImageFileState = {
     name: string;
@@ -90,7 +90,14 @@ const ImagePreviewContainer = styled.div`
     }
 `;
 
+const FileSizeLimit = styled.div`
+    font-size: 12px;
+    color: ${themeColors.colors.warning.light};
+    margin-bottom: ${themeColors.spacing.sm};
+`;
+
 export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpdate }: MeetupFormProps) {
+    const [messageApi, contextHolder] = message.useMessage();
     const router = useRouter();
 
     const [formData, setFormData] = useState<InternalMeetupFormData>({
@@ -168,6 +175,13 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
     };
 
     const handleImageUpdate = async () => {
+        if (isUpdatingImage || !meetupId || !onImageUpdate) {
+            return;
+        }
+        if (imageFile && imageFile.file && imageFile.file.size > 1024 * 1024) {
+            messageApi.error('Image size must be less than or equal to 1MB');
+            return;
+        }
         if (!onImageUpdate || !imageFile || !(imageFile.file instanceof File)) {
             return;
         }
@@ -212,8 +226,8 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
                 maxSeats: formData.maxSeats,
                 provided: formData.provided,
                 meetupDate: meetupDateStr,
-                startTime: `${meetupDateStr} ${startTimeStr}`,
-                endTime: `${meetupDateStr} ${endTimeStr}`,
+                startTime: `${meetupDateStr}T${startTimeStr}`,
+                endTime: `${meetupDateStr}T${endTimeStr}`,
                 image: formData.image,
             };
 
@@ -226,178 +240,187 @@ export default function MeetupForm({ meetupId, initialData, onSubmit, onImageUpd
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{meetupId ? 'Edit Meetup' : 'Create Meetup'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Form onSubmit={handleSubmit}>
-                    <FormGroup>
-                        <Label htmlFor="title">Title *</Label>
-                        <Input
-                            id="title"
-                            name="title"
-                            value={formData.title}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter meetup title"
-                        />
-                    </FormGroup>
-
-                    <FormGroup>
-                        <Label htmlFor="description">Description *</Label>
-                        <Textarea
-                            id="description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter meetup description"
-                            rows={4}
-                        />
-                    </FormGroup>
-
-                    <FormRow className="two-column">
+        <>
+            {contextHolder}
+            <Card>
+                <CardHeader>
+                    <CardTitle>{meetupId ? 'Edit Meetup' : 'Create Meetup'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form onSubmit={handleSubmit}>
                         <FormGroup>
-                            <Label htmlFor="location">Location *</Label>
+                            <Label htmlFor="title">Title *</Label>
                             <Input
-                                id="location"
-                                name="location"
-                                value={formData.location}
+                                id="title"
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
                                 required
-                                placeholder="Enter venue location"
+                                placeholder="Enter meetup title"
                             />
                         </FormGroup>
 
                         <FormGroup>
-                            <Label htmlFor="maxSeats">Max Seats *</Label>
-                            <Input
-                                id="maxSeats"
-                                name="maxSeats"
-                                type="number"
-                                value={formData.maxSeats}
+                            <Label htmlFor="description">Description *</Label>
+                            <Textarea
+                                id="description"
+                                name="description"
+                                value={formData.description}
                                 onChange={handleChange}
                                 required
-                                min="1"
+                                placeholder="Enter meetup description"
+                                rows={4}
                             />
                         </FormGroup>
-                    </FormRow>
 
-                    <FormRow className="three-column">
+                        <FormRow className="two-column">
+                            <FormGroup>
+                                <Label htmlFor="location">Location *</Label>
+                                <Input
+                                    id="location"
+                                    name="location"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Enter venue location"
+                                />
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Label htmlFor="maxSeats">Max Seats *</Label>
+                                <Input
+                                    id="maxSeats"
+                                    name="maxSeats"
+                                    type="number"
+                                    value={formData.maxSeats}
+                                    onChange={handleChange}
+                                    required
+                                    min="1"
+                                />
+                            </FormGroup>
+                        </FormRow>
+
+                        <FormRow className="three-column">
+                            <FormGroup>
+                                <Label htmlFor="meetupDate">Meetup Date *</Label>
+                                <DatePicker
+                                    id="meetupDate"
+                                    value={formData.meetupDate}
+                                    onChange={(date) => setFormData((prev) => ({ ...prev, meetupDate: date }))}
+                                    format="YYYY-MM-DD"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: themeColors.dark.background,
+                                        color: themeColors.colors.success.light,
+                                        fontSize: themeColors.typography.body.small.fontSize,
+                                        borderRadius: themeColors.cardBorder.md,
+                                        borderColor: themeColors.colors.success.light + '50',
+                                    }}
+                                    placeholder="Select meetup date"
+                                />
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Label htmlFor="startTime">Start Time *</Label>
+                                <TimePicker
+                                    id="startTime"
+                                    value={formData.startTime}
+                                    onChange={(time) => setFormData((prev) => ({ ...prev, startTime: time }))}
+                                    format="HH:mm"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: themeColors.dark.background,
+                                        color: themeColors.colors.success.light,
+                                        fontSize: themeColors.typography.body.small.fontSize,
+                                        borderRadius: themeColors.cardBorder.md,
+                                        borderColor: themeColors.colors.success.light + '50',
+                                    }}
+                                    placeholder="Select start time"
+                                />
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Label htmlFor="endTime">End Time *</Label>
+                                <TimePicker
+                                    id="endTime"
+                                    value={formData.endTime}
+                                    onChange={(time) => setFormData((prev) => ({ ...prev, endTime: time }))}
+                                    format="HH:mm"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: themeColors.dark.background,
+                                        color: themeColors.colors.success.light,
+                                        fontSize: themeColors.typography.body.small.fontSize,
+                                        borderRadius: themeColors.cardBorder.md,
+                                        borderColor: themeColors.colors.success.light + '50',
+                                    }}
+                                    placeholder="Select end time"
+                                />
+                            </FormGroup>
+                        </FormRow>
+
                         <FormGroup>
-                            <Label htmlFor="meetupDate">Meetup Date *</Label>
-                            <DatePicker
-                                id="meetupDate"
-                                value={formData.meetupDate}
-                                onChange={(date) => setFormData((prev) => ({ ...prev, meetupDate: date }))}
-                                format="YYYY-MM-DD"
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: themeColors.dark.background,
-                                    color: themeColors.colors.success.light,
-                                    fontSize: themeColors.typography.body.small.fontSize,
-                                    borderRadius: themeColors.cardBorder.md,
-                                    borderColor: themeColors.colors.success.light + '50',
-                                }}
-                                placeholder="Select meetup date"
+                            <Label htmlFor="provided">What is Provided</Label>
+                            <Textarea
+                                id="provided"
+                                name="provided"
+                                value={formData.provided}
+                                onChange={handleChange}
+                                placeholder="e.g., Refreshments, WiFi, Parking"
+                                rows={2}
                             />
                         </FormGroup>
 
                         <FormGroup>
-                            <Label htmlFor="startTime">Start Time *</Label>
-                            <TimePicker
-                                id="startTime"
-                                value={formData.startTime}
-                                onChange={(time) => setFormData((prev) => ({ ...prev, startTime: time }))}
-                                format="HH:mm"
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: themeColors.dark.background,
-                                    color: themeColors.colors.success.light,
-                                    fontSize: themeColors.typography.body.small.fontSize,
-                                    borderRadius: themeColors.cardBorder.md,
-                                    borderColor: themeColors.colors.success.light + '50',
-                                }}
-                                placeholder="Select start time"
-                            />
+                            <CheckboxWrapper>
+                                <Checkbox
+                                    id="parking"
+                                    name="parking"
+                                    checked={formData.parking}
+                                    onChange={handleChange}
+                                />
+                                <Label htmlFor="parking">Parking Available</Label>
+                            </CheckboxWrapper>
                         </FormGroup>
 
                         <FormGroup>
-                            <Label htmlFor="endTime">End Time *</Label>
-                            <TimePicker
-                                id="endTime"
-                                value={formData.endTime}
-                                onChange={(time) => setFormData((prev) => ({ ...prev, endTime: time }))}
-                                format="HH:mm"
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: themeColors.dark.background,
-                                    color: themeColors.colors.success.light,
-                                    fontSize: themeColors.typography.body.small.fontSize,
-                                    borderRadius: themeColors.cardBorder.md,
-                                    borderColor: themeColors.colors.success.light + '50',
-                                }}
-                                placeholder="Select end time"
-                            />
+                            <Label htmlFor="image">Event Image</Label>
+                            <FileSizeLimit>Upload an image (less than 1MB)</FileSizeLimit>
+                            <FileInputLabel>
+                                Choose Image
+                                <HiddenFileInput id="image" type="file" accept="image/*" onChange={handleFileChange} />
+                            </FileInputLabel>
+
+                            {imageFile && (imageFile.name || imageFile.preview) && (
+                                <ImagePreviewContainer>
+                                    {imageFile.name && <div>{imageFile.name}</div>}
+                                    {imageFile.preview && <img src={imageFile.preview} alt="Selected" />}
+                                    {meetupId && onImageUpdate && imageFile.file instanceof File && (
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            onClick={handleImageUpdate}
+                                            disabled={isUpdatingImage}
+                                            style={{ marginTop: themeColors.spacing.sm }}
+                                        >
+                                            {isUpdatingImage ? 'Updating...' : 'Update Image'}
+                                        </Button>
+                                    )}
+                                </ImagePreviewContainer>
+                            )}
                         </FormGroup>
-                    </FormRow>
 
-                    <FormGroup>
-                        <Label htmlFor="provided">What is Provided</Label>
-                        <Textarea
-                            id="provided"
-                            name="provided"
-                            value={formData.provided}
-                            onChange={handleChange}
-                            placeholder="e.g., Refreshments, WiFi, Parking"
-                            rows={2}
-                        />
-                    </FormGroup>
-
-                    <FormGroup>
-                        <CheckboxWrapper>
-                            <Checkbox id="parking" name="parking" checked={formData.parking} onChange={handleChange} />
-                            <Label htmlFor="parking">Parking Available</Label>
-                        </CheckboxWrapper>
-                    </FormGroup>
-
-                    <FormGroup>
-                        <Label htmlFor="image">Event Image</Label>
-                        <FileInputLabel>
-                            Choose Image
-                            <HiddenFileInput id="image" type="file" accept="image/*" onChange={handleFileChange} />
-                        </FileInputLabel>
-
-                        {imageFile && (imageFile.name || imageFile.preview) && (
-                            <ImagePreviewContainer>
-                                {imageFile.name && <div>{imageFile.name}</div>}
-                                {imageFile.preview && <img src={imageFile.preview} alt="Selected" />}
-                                {meetupId && onImageUpdate && imageFile.file instanceof File && (
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={handleImageUpdate}
-                                        disabled={isUpdatingImage}
-                                        style={{ marginTop: themeColors.spacing.sm }}
-                                    >
-                                        {isUpdatingImage ? 'Updating...' : 'Update Image'}
-                                    </Button>
-                                )}
-                            </ImagePreviewContainer>
-                        )}
-                    </FormGroup>
-
-                    <FormActions>
-                        <Button type="button" variant="secondary" onClick={handleCancel}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" variant="primary">
-                            {meetupId ? 'Update Meetup' : 'Create Meetup'}
-                        </Button>
-                    </FormActions>
-                </Form>
-            </CardContent>
-        </Card>
+                        <FormActions>
+                            <Button type="button" variant="secondary" onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" variant="primary">
+                                {meetupId ? 'Update Meetup' : 'Create Meetup'}
+                            </Button>
+                        </FormActions>
+                    </Form>
+                </CardContent>
+            </Card>
+        </>
     );
 }

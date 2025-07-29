@@ -27,7 +27,7 @@ export default function HomePage() {
 
             const statisticsResponse = await getStatistics();
 
-            const statsData = statisticsResponse.data?.data || {
+            const statsData = statisticsResponse.data || {
                 totalSpeakers: 0,
                 totalUsers: 0,
                 totalEvents: 0,

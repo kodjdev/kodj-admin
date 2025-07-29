@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
 
 type ButtonProps = {
-    variant?: 'primary' | 'secondary' | 'success' | 'error' | 'warning';
+    variant?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'transparent';
     size?: 'sm' | 'md' | 'lg';
     fullWidth?: boolean;
 };
@@ -56,6 +56,18 @@ export const Button = styled.button<ButtonProps>`
                     
                     &:hover {
                         background-color: ${themeColors.colors.warning.dark};
+                    }
+                `;
+            case 'transparent':
+                return `
+                    background-color: transparent;
+                    color: ${themeColors.colors.neutral.white};
+                    border: 1px solid ${themeColors.colors.neutral.gray300};
+
+                    &:hover {
+                        background-color: ${themeColors.colors.neutral.gray200};
+                        border-color: ${themeColors.colors.neutral.gray400};
+                        color: ${themeColors.colors.neutral.gray800};
                     }
                 `;
             default:

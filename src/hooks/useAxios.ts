@@ -67,8 +67,8 @@ export default function useAxios() {
                             },
                         );
 
-                        if (response.data?.data?.access_token) {
-                            const { access_token, refresh_token } = response.data.data;
+                        if (response.data?.access_token && response.data?.refresh_token) {
+                            const { access_token, refresh_token } = response.data;
                             localStorage.setItem('access_token', access_token);
                             localStorage.setItem('refresh_token', refresh_token);
 
@@ -137,7 +137,7 @@ export default function useAxios() {
                 const response: AxiosResponse = await axiosInstance(config);
 
                 const apiResponse: ApiResponse<T> = {
-                    data: response.data,
+                    data: response.data.data as T,
                     statusCode: response.status,
                     message: response.data.message || 'success',
                 };

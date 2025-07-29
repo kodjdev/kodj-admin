@@ -8,8 +8,8 @@ import {
     Keynote,
     KeynoteFormData,
     MeetupPaginationParams,
-    MeetupDetailsResponse,
     MeetupResponse,
+    MeetupDetails,
 } from '@/types/meetup';
 import { useMemo } from 'react';
 import { PaginatedResponse } from '@/types/api';
@@ -32,8 +32,8 @@ export const useMeetupService = () => {
                 });
             },
 
-            getMeetupDetails: async (id: number): Promise<ApiResponse<MeetupDetailsResponse>> => {
-                return await fetchData<MeetupDetailsResponse>({
+            getMeetupDetails: async (id: number): Promise<ApiResponse<MeetupDetails>> => {
+                return await fetchData<MeetupDetails>({
                     endpoint: `/public/meetups/${id}/details`,
                     method: 'GET',
                 });

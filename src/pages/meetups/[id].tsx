@@ -25,11 +25,11 @@ export default function EditMeetupPage() {
             const result = await handleAsyncOperation(
                 async () => {
                     const response = await getMeetupDetails(Number(id));
-                    if (response.statusCode !== 200 || !response.data.data) {
+                    if (response.statusCode !== 200 || !response.data) {
                         throw new Error('Failed to fetch meetup details');
                     }
 
-                    const raw = response.data.data;
+                    const raw = response.data;
                     console.log('Fetched raw meetup details:', raw);
 
                     const mapped: Meetup = {

@@ -5,6 +5,7 @@ import { Table, Thead, Tbody, Tr, Th, Td, ActionButtons } from '@/components/com
 import { Button } from '@/components/common/Button';
 import styled from 'styled-components';
 import { themeColors } from '@/themes/themeColors';
+import { RefreshCwIcon } from 'lucide-react';
 
 type JobListProps = {
     jobs: JobPost[];
@@ -131,8 +132,8 @@ export default function JobList({ jobs, loading, onDelete, onRefresh }: JobListP
             <HeaderContainer>
                 <PageTitle>Jobs Management</PageTitle>
                 <div style={{ display: 'flex', gap: themeColors.spacing.md }}>
-                    <Button variant="secondary" onClick={onRefresh}>
-                        Refresh
+                    <Button variant="transparent" onClick={onRefresh}>
+                        <RefreshCwIcon size={16} />
                     </Button>
                     <Button onClick={handleCreate}>Create a post</Button>
                 </div>

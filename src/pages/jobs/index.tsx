@@ -20,7 +20,7 @@ export default function JobsPage() {
             setLoading(true);
             const response = await getJobPosts();
 
-            const jobsData = response.data?.data.content || [];
+            const jobsData = response.data?.content || [];
 
             setJobs(jobsData);
 
