@@ -25,9 +25,9 @@ export type User = {
     role: 'user' | 'admin' | 'speaker';
 };
 
-export type UserDetails = {
-    data: User;
-};
+// export type UserDetails = {
+//     data: User;
+// };
 
 export type PaginationParams = {
     page?: number;

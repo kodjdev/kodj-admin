@@ -2,6 +2,7 @@ import { ApiResponse, PaginationParams } from '@/types/common';
 import { JobFormData, JobApiResponse, JobsApiResponse } from '@/types/job';
 import { useMemo } from 'react';
 import useAxios from '@/hooks/useAxios';
+import { access } from 'fs';
 
 export const useJobService = () => {
     const fetchData = useAxios();
@@ -40,32 +41,34 @@ export const useJobService = () => {
                     endpoint: '/admin/job-posts',
                     method: 'POST',
                     data: formData,
-                    // customHeaders: {
-                    //     'Content-Type': 'multipart/form-data',
-                    // },
                 });
             },
 
             updateJobPost: async (id: number, jobData: JobFormData): Promise<JobApiResponse> => {
-                const formData = new FormData();
-
-                Object.entries(jobData).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null) {
-                        if (key === 'image' && value instanceof File) {
-                            formData.append(key, value);
-                        } else {
-                            formData.append(key, String(value));
-                        }
-                    }
-                });
+                const { image, ...jsonData } = jobData;
 
                 return fetchData({
                     endpoint: `/admin/job-posts/${id}`,
                     method: 'PUT',
+                    data: jsonData,
+                    customHeaders: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            },
+
+            updateJobPostImage: async (id: number, image: File): Promise<JobApiResponse> => {
+                const formData = new FormData();
+                formData.append('image', image);
+                const accessToken = localStorage.getItem('access_token');
+
+                return fetchData({
+                    endpoint: `/admin/job-posts/${id}/media`,
+                    method: 'PUT',
                     data: formData,
-                    // customHeaders: {
-                    //     'Content-Type': 'multipart/form-data',
-                    // },
+                    customHeaders: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
                 });
             },
 

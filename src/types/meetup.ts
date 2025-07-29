@@ -52,9 +52,9 @@ export type MeetupDetails = {
     reviews: Review[];
 };
 
-export type MeetupDetailsResponse = {
-    data: MeetupDetails;
-};
+// export type MeetupDetailsResponse = {
+//     data: MeetupDetails;
+// };
 
 export type MeetupRegistration = {
     id: number;
