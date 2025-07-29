@@ -27,7 +27,7 @@ export default function NewsPage() {
             if (response.statusCode === 200 && response.data) {
                 messageApi.success('News loaded successfully');
                 const newsArray = Array.isArray(response.data.content) ? response.data.content : [];
-                setNewsList(newsArray.flat());
+                setNewsList(newsArray);
             } else {
                 throw new Error('Failed to fetch news');
             }

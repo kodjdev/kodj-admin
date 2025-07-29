@@ -39,7 +39,9 @@ export default function MeetupsPage() {
 
             if (upcomingResult.status === 'fulfilled') {
                 if (upcomingResult.value.statusCode === 200) {
-                    setUpcomingMeetups(upcomingResult.value.data?.data.content || []);
+                    setUpcomingMeetups(
+                        Array.isArray(upcomingResult.value.data.content) ? upcomingResult.value.data.content : [],
+                    );
                 } else {
                     setErrorUpcoming(upcomingResult.value.message || 'Unknown error');
                 }
@@ -50,7 +52,7 @@ export default function MeetupsPage() {
 
             if (pastResult.status === 'fulfilled') {
                 if (pastResult.value.statusCode === 200) {
-                    setPastMeetups(pastResult.value.data?.data.content || []);
+                    setPastMeetups(Array.isArray(pastResult.value.data.content) ? pastResult.value.data.content : []);
                 } else {
                     setErrorPast(pastResult.value.message || 'Unknown error');
                 }

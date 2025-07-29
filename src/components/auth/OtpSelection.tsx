@@ -131,7 +131,6 @@ export default function StyledOtpSection({
         if (pastedData.length > 0) {
             onOtpChange(pastedData.padEnd(5, ''));
 
-            // Focus the next empty input or last input
             const nextIndex = Math.min(pastedData.length, 4);
             const nextInput = document.querySelector(`input[data-index="${nextIndex}"]`) as HTMLInputElement;
             nextInput?.focus();

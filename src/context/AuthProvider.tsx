@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.log('User details response:', userResponse);
 
                 if (userResponse.data) {
-                    const userData = userResponse.data.data;
+                    const userData = userResponse.data;
 
                     if (userData.oauthProvider !== 'LOCAL') {
                         throw new Error('Access denied. Admin privileges required.');
@@ -148,8 +148,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     return false;
                 }
                 const response = await authService.verifyLoginOtp(tempEmail, Number(otp));
-                if (response.data.data.access_token && response.data.data.refresh_token) {
-                    const { access_token, refresh_token } = response.data.data;
+                if (response.data.access_token && response.data.refresh_token) {
+                    const { access_token, refresh_token } = response.data;
 
                     console.log('Response tokens:', { access_token, refresh_token });
 
@@ -218,11 +218,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             /* if access token failed or does not exist, we try to refresh token */
             if (refreshTokenValue) {
                 const response = await authService.refreshToken();
-                if (response.data?.data?.access_token) {
-                    localStorage.setItem('access_token', response.data.data.access_token);
-                    localStorage.setItem('refresh_token', response.data.data.refresh_token);
+                if (response.data?.access_token) {
+                    localStorage.setItem('access_token', response.data.access_token);
+                    localStorage.setItem('refresh_token', response.data.refresh_token);
 
-                    const userInfo = await loadUserFromToken(response.data.data.access_token);
+                    const userInfo = await loadUserFromToken(response.data.access_token);
                     if (userInfo) {
                         setUser(userInfo);
                         setIsAuthenticated(true);
@@ -272,16 +272,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     const response = await authService.refreshToken();
                     if (response.data) {
-                        localStorage.setItem('access_token', response.data.data.access_token);
-                        localStorage.setItem('refresh_token', response.data.data.refresh_token);
+                        localStorage.setItem('access_token', response.data.access_token);
+                        localStorage.setItem('refresh_token', response.data.refresh_token);
                     }
                 } catch (err) {
                     console.error('Token refresh failed:', err);
                     logout();
                 }
             },
-            /* refresh token every 15 minutes */
-            15 * 60 * 1000,
+            /* refresh token every 23 hours */
+            23 * 60 * 60 * 1000,
         );
 
         return () => clearInterval(interval);
